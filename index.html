@@ -1,0 +1,1220 @@
+<!doctype html>
+<html lang="es-PE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#101C2E">
+<title>Nivel Cero · Equipo Arequipa</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%23101C2E'/><circle cx='16' cy='16' r='8.5' fill='none' stroke='%23EDEFEA' stroke-width='3'/></svg>">
+<style>
+/* Claro a propósito, como el resto de la plataforma: los colores de estado
+   llevan significado y Chrome los distorsiona si auto-oscurece la página. */
+:root{
+  color-scheme: light;
+  --ink:#101C2E; --ink70:#3A4658; --ink40:#7C8794;
+  --paper:#EDEFEA; --card:#FFF; --rule:#D4D8D0; --soft:#F4F5F1;
+  --verde:#0F6E4F; --verdeS:#E2EFE8;
+  --ambar:#A96A08; --ambarS:#F6EAD3;
+  --alerta:#9B2C2C; --alertaS:#F5E0E0;
+  --acero:#3E5C8A; --aceroS:#E3E9F2;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
+body.con-modal{overflow:hidden}
+button{font-family:inherit;cursor:pointer;color:inherit}
+input,select,textarea{font-family:inherit}
+[hidden]{display:none!important}
+.wrap{max-width:760px;margin:0 auto;padding-left:16px;padding-right:16px}
+.mono{font-family:var(--mono)}
+.caps{text-transform:uppercase;letter-spacing:.13em;font-family:var(--mono)}
+.tiny{font-size:9.5px}
+.lbl{display:block;font:10px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--ink40);margin:0 0 6px}
+.hint{font:12px/1.55 var(--mono);color:var(--ink40)}
+.err{color:var(--alerta);font:13px/1.5 var(--mono);margin:10px 0 0}
+.card{background:var(--card);border:1px solid var(--rule)}
+.pad{padding:14px 16px}
+.mt{margin-top:14px}
+
+/* cabecera */
+.top{background:var(--ink);color:#fff;position:sticky;top:0;z-index:20;padding-top:env(safe-area-inset-top)}
+.fila-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.top .fila-top{padding-top:12px;padding-bottom:6px}
+.marca{display:flex;align-items:center;gap:10px}
+.cero{flex:0 0 auto;width:34px;height:34px;border:3px solid currentColor;border-radius:50%}
+.top .caps{color:#A9B2BE}
+.h1{font-size:19px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.acciones-top{display:flex;align-items:center;gap:12px}
+.icono{background:none;border:1px solid #3A4658;color:#fff;width:36px;height:36px;font-size:18px;line-height:1}
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1 0 auto;background:none;border:0;border-bottom:3px solid transparent;color:#A9B2BE;
+  padding:11px 8px 10px;font:11px/1 var(--mono);text-transform:uppercase;letter-spacing:.09em;white-space:nowrap}
+.tab.on{color:#fff;border-bottom-color:#fff}
+.cuenta{display:inline-block;min-width:18px;padding:1px 5px;background:var(--ink40);color:#fff;
+  font:10px/14px var(--mono);border-radius:9px;text-align:center;letter-spacing:0;vertical-align:1px}
+.tab .cuenta{background:#33415A}
+.tab.on .cuenta{background:var(--ambar)}
+main.wrap{padding-top:16px}
+
+/* elementos */
+.lk{background:none;border:0;padding:0;font:12px/1.5 var(--mono);color:var(--acero);text-decoration:underline;text-underline-offset:2px}
+.lk.claro{color:#C9D1DB}
+.lk.peligro,.btn.peligro{color:var(--alerta)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--ink);background:var(--ink);color:#fff;
+  padding:12px 16px;font:12px/1.1 var(--mono);text-transform:uppercase;letter-spacing:.08em;min-height:44px;text-decoration:none}
+.btn.sec{background:#fff;color:var(--ink);border-color:var(--rule)}
+.btn.ok{background:var(--verde);border-color:var(--verde);color:#fff}
+.btn.sm{padding:8px 11px;min-height:36px;font-size:11px}
+.btn.grande{min-height:58px;font:600 16px/1.25 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-transform:none;letter-spacing:0}
+.nw{white-space:nowrap}
+.btn.full{width:100%;margin-top:10px}
+.btn[disabled]{opacity:.4;cursor:default}
+.in{width:100%;padding:11px 12px;border:1px solid var(--rule);background:#fff;color:var(--ink);font-size:16px;border-radius:0;-webkit-appearance:none;appearance:none}
+.in:focus{outline:2px solid var(--acero);outline-offset:-1px;border-color:var(--acero)}
+textarea.in{resize:vertical;min-height:64px}
+input[type=date].in,input[type=time].in{min-height:46px}
+.busca{margin:14px 0 10px}
+.regla{font:12.5px/1.5 var(--mono);color:var(--ink70);margin:0 0 14px;padding-left:10px;border-left:3px solid var(--acero)}
+.aviso{background:var(--ambarS);border-left:3px solid var(--ambar);padding:10px 12px;font:12.5px/1.5 var(--mono);color:#5E3C04;margin:12px 0}
+.aviso.chico{margin:8px 0 0;font-size:12px}
+.sec-t{font:11px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--ink70);margin:22px 0 8px;display:flex;align-items:center;gap:8px}
+.sec-t.chico{margin-top:18px}
+.tag{display:inline-block;font:9.5px/15px var(--mono);text-transform:uppercase;letter-spacing:.08em;padding:0 5px;background:var(--aceroS);color:var(--acero);vertical-align:2px;font-weight:400}
+.tag.gris{background:var(--soft);color:var(--ink40)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--rule);background:#fff;padding:9px 12px;font:11px/1 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink70);min-height:38px}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip span{opacity:.7;margin-left:3px}
+.chk{display:flex;align-items:center;gap:10px;font:13px/1.4 var(--mono);color:var(--ink70);margin:14px 0 4px}
+.chk input{width:20px;height:20px;flex:0 0 auto}
+
+/* filas */
+.fila{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:#fff;border:1px solid var(--rule);
+  margin-top:-1px;padding:12px 14px;min-height:62px;font-size:inherit}
+.fila[role=button],.fila[data-a]{cursor:pointer}
+.cuerpo{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.cuerpo[role=button]{cursor:pointer}
+.nom{font-size:15.5px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.sub{font:12px/1.4 var(--mono);color:var(--ink40)}
+.sub.urge{color:var(--alerta)}
+.sub.ok{color:var(--verde)}
+.sub.mal{color:var(--ambar)}
+.sub.chico{font-size:11px}
+.der{display:flex;align-items:center;gap:10px;flex:0 0 auto}
+.pts{display:inline-flex;gap:3px;flex:0 0 auto}
+.pts i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--ink40);display:block}
+.pts i.on{background:var(--acero);border-color:var(--acero)}
+.wa{display:grid;place-items:center;width:42px;height:42px;border:1px solid var(--rule);color:var(--verde);background:#fff}
+.wa svg{width:20px;height:20px}
+.num{display:flex;flex-direction:column;align-items:flex-end;font:700 21px/1 var(--mono)}
+.num small{font:10px/1.5 var(--mono);color:var(--ink40);text-transform:uppercase;letter-spacing:.07em;font-weight:400}
+
+/* asistencia */
+.asis .caja{flex:0 0 30px;height:30px;border:2px solid var(--ink40);background:#fff;display:grid;place-items:center}
+.asis.on{background:var(--verdeS);border-color:#B9D6C7;position:relative;z-index:1}
+.asis.on .caja{background:var(--verde);border-color:var(--verde)}
+.asis.on .caja::after{content:"";width:8px;height:14px;border:solid #fff;border-width:0 3px 3px 0;transform:translateY(-2px) rotate(45deg)}
+.asis[disabled]{opacity:.55;cursor:default}
+.cab-clase .h2{font-size:18px;font-weight:700;margin-top:2px;line-height:1.25}
+.cab-clase .sub{margin-top:3px}
+.contador{display:flex;flex-direction:column;align-items:center;min-width:80px}
+.contador b{font:700 34px/1 var(--mono);color:var(--verde)}
+.volver{display:inline-block;margin:0 0 10px}
+
+/* números */
+.bloque{margin-top:16px}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.kpi{padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.kpi b{font:700 28px/1 var(--mono)}
+.barra{margin:12px 0}
+.barra-t{display:flex;justify-content:space-between;gap:10px;font:13px/1.3 var(--mono);color:var(--ink70);margin-bottom:5px}
+.barra-t small{color:var(--ink40);font-weight:400}
+.barra-f{height:10px;background:var(--soft);border:1px solid var(--rule)}
+.barra-f i{display:block;height:100%;background:var(--acero)}
+.comp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:6px 0 8px}
+.comp>div{border:1px solid var(--rule);padding:12px;display:flex;flex-direction:column;gap:4px}
+.comp b{font:700 26px/1 var(--mono)}
+.comp>div:first-child b{color:var(--verde)}
+.tabla-x{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.t{width:100%;border-collapse:collapse;font:12.5px/1.35 var(--mono)}
+.t th{font-weight:400;color:var(--ink40);text-transform:uppercase;font-size:10px;letter-spacing:.05em;text-align:right;padding:6px 5px;border-bottom:1px solid var(--rule);white-space:nowrap}
+.t td{text-align:right;padding:8px 5px;border-bottom:1px solid var(--soft);white-space:nowrap}
+.t th:first-child,.t td:first-child{text-align:left;white-space:normal}
+
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(16,28,46,.55);z-index:50;display:flex;justify-content:center;align-items:flex-end}
+.modal{background:#fff;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;border-top:4px solid var(--ink);
+  padding-bottom:env(safe-area-inset-bottom);-webkit-overflow-scrolling:touch}
+@media(min-width:700px){.ov{align-items:flex-start;padding:40px 16px;overflow-y:auto}.modal{border:1px solid var(--ink);border-top-width:4px;max-height:none}}
+.mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:16px 16px 10px;border-bottom:1px solid var(--rule);
+  position:sticky;top:0;background:#fff;z-index:1}
+.mhead .h2{font-size:18px;font-weight:700;line-height:1.25}
+.x{background:none;border:0;font-size:30px;line-height:1;padding:0 4px;color:var(--ink70);min-width:40px;min-height:40px}
+.mbody{padding:14px 16px 22px}
+.estado{font:13px/1.45 var(--mono);padding:9px 11px;background:var(--soft);border-left:3px solid var(--ink40);margin-bottom:14px}
+.estado.ok{background:var(--verdeS);border-color:var(--verde)}
+.estado.urge{background:var(--alertaS);border-color:var(--alerta)}
+.estado.mal{background:var(--ambarS);border-color:var(--ambar)}
+dl.datos{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;margin:0 0 16px;font-size:14px}
+dl.datos dt{font:10px/2 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink40)}
+dl.datos dd{margin:0;line-height:1.5;overflow-wrap:anywhere}
+.clases-p{list-style:none;padding:0;margin:6px 0 0;font:12px/1.75 var(--mono);color:var(--ink70)}
+.edit{margin-top:8px}
+.fila-btn{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:8px}
+.pie{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--rule)}
+
+/* login y avisos */
+.login{max-width:440px;padding-top:12vh}
+.login .marca{margin-bottom:16px}
+.login h1{margin:2px 0 0;font-size:26px;letter-spacing:-.01em}
+.login .regla{margin-bottom:18px}
+.centro{text-align:center;padding-top:80px}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translate(-50%,140%);background:var(--ink);color:#fff;
+  font:13px/1.4 var(--mono);padding:11px 16px;width:max-content;max-width:calc(100% - 32px);z-index:80;opacity:0;transition:transform .2s,opacity .2s;pointer-events:none}
+.toast.on{transform:translate(-50%,0);opacity:1}
+.toast.ok{background:var(--verde)}
+.toast.mal{background:var(--alerta)}
+@media(max-width:380px){.kpi b{font-size:24px}dl.datos{grid-template-columns:82px minmax(0,1fr)}.tab{padding-left:6px;padding-right:6px;letter-spacing:.05em}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="capa"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* =====================================================================
+   NIVEL CERO · Equipo Arequipa
+   Programa de arranque antes del Empiece Ya: 5 capacitaciones en los
+   primeros 30 días = botella de acero (adelanto del Empiece Ya). Si luego
+   gana el Empiece Ya, la botella se descuenta de ese premio.
+
+   Backend: Supabase kiexpdaaoegbtesqmaff, tablas n0_* y vista n0_inscritos
+   (afiliaciones del registro + inscritos a mano). Todo pasa por funciones
+   n0_* que exigen la sesión de admin (admin_login, la clave del panel).
+   Sin librerías: JS plano, un solo archivo.
+   ===================================================================== */
+(function () {
+"use strict";
+
+var SB_URL = "https://kiexpdaaoegbtesqmaff.supabase.co";
+var SB_KEY = "sb_publishable_pftOAOUR51_Q5gq-Qqra-g_cc0rzhth";
+var LS_TOKEN = "n0-token";
+
+var DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+var DIAS_C = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+var MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre"];
+var MESES_C = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "set", "oct", "nov", "dic"];
+var ICON_MSG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2-5.2A8.4 8.4 0 1 1 21 11.5z"/></svg>';
+
+function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
+function lsSet(k, v) { try { if (v == null) window.localStorage.removeItem(k); else window.localStorage.setItem(k, v); } catch (e) {} }
+
+var S = {
+  token: lsGet(LS_TOKEN), d: null, errorCarga: null, loginError: null, ocupado: false,
+  tab: "asistencia", clase: null, buscaAsis: "", fuera: false, masClases: false,
+  filtro: "en_curso", buscaIns: "", modal: null
+};
+var IDX = { ins: {}, presentes: {} };   // presentes[claseId][inscritoId] = true
+var enVuelo = {};
+
+/* ---------------------------------------------------------- utilidades */
+function esc(s) {
+  return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+var MINUS = { de: 1, del: 1, la: 1, las: 1, los: 1, y: 1, e: 1, da: 1, van: 1, von: 1 };
+function titulo(n) {
+  return String(n || "").toLowerCase().replace(/\s+/g, " ").trim().split(" ").map(function (p, i) {
+    if (i > 0 && MINUS[p]) return p;
+    return p.charAt(0).toUpperCase() + p.slice(1);
+  }).join(" ");
+}
+function pila(n) { return titulo(n).split(" ")[0] || ""; }
+function plano(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
+function partes(iso) { var p = String(iso).slice(0, 10).split("-"); return { y: +p[0], m: +p[1], d: +p[2] }; }
+function utc(iso) { var p = partes(iso); return Date.UTC(p.y, p.m - 1, p.d); }
+function diasEntre(a, b) { return Math.round((utc(b) - utc(a)) / 864e5); }
+function sumarDias(iso, n) { return new Date(utc(iso) + n * 864e5).toISOString().slice(0, 10); }
+function dow(iso) { return new Date(utc(iso)).getUTCDay(); }
+function fCorta(iso) { if (!iso) return ""; var p = partes(iso); return p.d + " " + MESES_C[p.m - 1]; }
+function fDia(iso) { if (!iso) return ""; return DIAS_C[dow(iso)] + " " + fCorta(iso); }
+function fLarga(iso) { if (!iso) return ""; var p = partes(iso); return DIAS[dow(iso)] + " " + p.d + " de " + MESES[p.m - 1]; }
+function fMes(ym) { var p = ym.split("-"); return MESES_C[+p[1] - 1] + " " + p[0]; }
+function mayus(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function hora12(h) {
+  if (!h) return "";
+  var p = String(h).split(":"), hh = +p[0], mm = p[1] || "00";
+  return (hh % 12 || 12) + ":" + mm + " " + (hh < 12 ? "a. m." : "p. m.");
+}
+function plural(n, s, p) { return n + " " + (n === 1 ? s : p); }
+function pct(a, b) { return b ? Math.round(a * 100 / b) : 0; }
+function hoy() { return S.d ? S.d.hoy : new Date().toISOString().slice(0, 10); }
+function val(id) { var el = document.getElementById(id); return el ? el.value : ""; }
+
+var TILDES = [[/Sesion/g, "Sesión"], [/invalida/g, "inválida"], [/todavia/g, "todavía"], [/\bdia\b/g, "día"],
+  [/codigo/g, "código"], [/digitos/g, "dígitos"], [/inscripcion/g, "inscripción"], [/no es valida/g, "no es válida"],
+  [/no valida/g, "no válida"], [/esta fuera/g, "está fuera"]];
+function bonito(msg) {
+  var s = String(msg || "Algo falló");
+  if (/Failed to fetch|NetworkError|Load failed|network/i.test(s)) return "Sin conexión. Revisa tu internet e intenta de nuevo.";
+  TILDES.forEach(function (t) { s = s.replace(t[0], t[1]); });
+  return s;
+}
+
+/* ---------------------------------------------------------- red */
+function rpc(fn, args) {
+  return fetch(SB_URL + "/rest/v1/rpc/" + fn, {
+    method: "POST",
+    headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(args || {})
+  }).then(function (r) {
+    return r.text().then(function (t) {
+      var j = null;
+      try { j = t ? JSON.parse(t) : null; } catch (e) {}
+      if (!r.ok) {
+        var msg = (j && (j.message || j.hint || j.error)) || ("Error " + r.status);
+        if (/Sesion invalida/i.test(msg) && fn !== "admin_login") cerrarSesion("Tu sesión se cerró. Vuelve a entrar.");
+        throw new Error(msg);
+      }
+      return j;
+    });
+  });
+}
+
+/* ---------------------------------------------------------- datos */
+function indexar() {
+  IDX.ins = {}; IDX.presentes = {};
+  S.d.clases.forEach(function (c) { IDX.presentes[c.id] = {}; });
+  S.d.inscritos.forEach(function (p) {
+    IDX.ins[p.id] = p;
+    (p.asistencias || []).forEach(function (a) {
+      if (!IDX.presentes[a.c]) IDX.presentes[a.c] = {};
+      IDX.presentes[a.c][p.id] = true;
+    });
+  });
+}
+function parchar(p) {
+  if (!p || !p.id || !S.d) return;
+  var i = S.d.inscritos.findIndex(function (x) { return x.id === p.id; });
+  if (i >= 0) S.d.inscritos[i] = p; else S.d.inscritos.unshift(p);
+  IDX.ins[p.id] = p;
+  Object.keys(IDX.presentes).forEach(function (c) { delete IDX.presentes[c][p.id]; });
+  (p.asistencias || []).forEach(function (a) {
+    if (!IDX.presentes[a.c]) IDX.presentes[a.c] = {};
+    IDX.presentes[a.c][p.id] = true;
+  });
+}
+function ponerClase(k) {
+  var i = S.d.clases.findIndex(function (x) { return x.id === k.id; });
+  if (i >= 0) S.d.clases[i] = k; else S.d.clases.push(k);
+  S.d.clases.sort(function (a, b) { return (b.fecha + b.hora).localeCompare(a.fecha + a.hora); });
+  if (!IDX.presentes[k.id]) IDX.presentes[k.id] = {};
+}
+function cargar(silencioso) {
+  if (!S.token) return Promise.resolve();
+  if (!silencioso && !S.d) render();
+  return rpc("n0_datos", { p_token: S.token }).then(function (d) {
+    S.d = d; S.errorCarga = null; indexar();
+    if (S.clase && !claseDe(S.clase)) S.clase = null;
+    if (S.modal && S.modal.tipo === "persona" && !IDX.ins[S.modal.id]) S.modal = null;
+  }).catch(function (e) {
+    if (!S.token) return;
+    if (!S.d) S.errorCarga = bonito(e.message); else aviso(bonito(e.message), "mal");
+  }).then(function () {
+    render();
+    if (S.modal && S.modal.tipo === "persona") refrescarModal();
+  });
+}
+function entrar(clave) {
+  S.loginError = null; S.ocupado = true; render();
+  return rpc("admin_login", { p_clave: clave }).then(function (tok) {
+    S.token = tok; lsSet(LS_TOKEN, tok); S.ocupado = false;
+    return cargar();
+  }).catch(function (e) {
+    S.ocupado = false; S.loginError = bonito(e.message); render();
+    var c = document.getElementById("clave"); if (c) c.focus();
+  });
+}
+function cerrarSesion(msg) {
+  S.token = null; lsSet(LS_TOKEN, null); S.d = null; S.clase = null; S.modal = null;
+  S.loginError = msg || null; S.ocupado = false;
+  renderModal(); render();
+}
+
+/* ---------------------------------------------------------- reglas */
+function cfg() { return S.d.config; }
+function meta() { return cfg().clases_meta; }
+function claseDe(id) {
+  if (!S.d) return null;
+  for (var i = 0; i < S.d.clases.length; i++) if (S.d.clases[i].id === id) return S.d.clases[i];
+  return null;
+}
+function horarios() { return (cfg().horarios || []).slice().sort(function (a, b) { return a.dia - b.dia || a.hora.localeCompare(b.hora); }); }
+function horarioDe(iso) { var d = dow(iso); return horarios().filter(function (h) { return h.dia === d; }); }
+function enPlazo(p, fecha) { return p.inicio <= fecha && fecha <= p.vence; }
+function diasRestan(p) { return diasEntre(hoy(), p.vence); }
+function ganoEY(p) { return !!(p.ey && typeof p.ey === "object"); }
+function estadoBotella(p) {
+  if (p.botella_entregada_en) return "entregada";
+  if (p.estado === "logro") return ganoEY(p) ? "con_ey" : "por_entregar";
+  return "no";
+}
+function descuento(p) {
+  if (!p.botella_entregada_en || !ganoEY(p)) return null;
+  return p.ey_descontado_en ? "hecho" : "pendiente";
+}
+function reglaTexto() {
+  return meta() + " capacitaciones en los primeros " + cfg().dias_plazo + " días = botella de acero, el adelanto del Empiece Ya.";
+}
+function etiquetaEY(ey) {
+  if (!ey) return "";
+  if (!ey.pb) return "el cierre del " + fCorta(ey.fecha);
+  return "PB" + ey.pb + (ey.anio && ey.anio !== partes(hoy()).y ? " de " + ey.anio : "") + " (" + fCorta(ey.fecha) + ")";
+}
+function lineaEstado(p) {
+  var m = meta();
+  if (p.estado === "en_curso") {
+    var d = diasRestan(p);
+    return { txt: p.validas + " de " + m + " · " + (d <= 0 ? "vence hoy" : d === 1 ? "le queda 1 día" : "le quedan " + d + " días") + " (" + fCorta(p.vence) + ")",
+             cls: d <= 5 && p.validas < m ? "urge" : "" };
+  }
+  if (p.estado === "logro") {
+    var b = estadoBotella(p);
+    return { txt: "Logró el " + fCorta(p.logro_fecha) + " · " + (b === "entregada" ? "botella entregada" : b === "con_ey" ? "su botella va con el Empiece Ya" : "botella por entregar"),
+             cls: "ok" };
+  }
+  if (p.estado === "vencio") return { txt: "Venció el " + fCorta(p.vence) + " con " + p.validas + " de " + m, cls: "mal" };
+  if (p.estado === "sin_seguimiento") return { txt: "Inscrito antes del seguimiento (" + fCorta(p.fecha_inscripcion) + ")", cls: "" };
+  if (p.estado === "excluido") return { txt: "Fuera del Nivel Cero", cls: "" };
+  return { txt: "", cls: "" };
+}
+function puntos(n) {
+  var m = meta(), h = '<span class="pts" aria-label="' + n + ' de ' + m + '">';
+  for (var i = 0; i < m; i++) h += '<i class="' + (i < n ? "on" : "") + '"></i>';
+  return h + "</span>";
+}
+
+/* WhatsApp con el mensaje que toca según dónde está la persona */
+function horariosTexto() {
+  var l = horarios().map(function (x) { return "el " + DIAS[x.dia] + " a las " + hora12(x.hora); });
+  if (l.length <= 1) return l.join("");
+  return l.slice(0, -1).join(", ") + " o " + l[l.length - 1];
+}
+function mensaje(p) {
+  var n = pila(p.nombre), m = meta();
+  if (p.estado === "en_curso") {
+    var hasta = "hasta el " + fLarga(p.vence);
+    if (p.validas === 0)
+      return "Hola " + n + ", ¡qué gusto tenerte en el equipo! Si vienes a " + m + " capacitaciones " + hasta +
+             ", ganas tu botella de acero, el adelanto de tu Empiece Ya. Te esperamos " + horariosTexto() + ".";
+    var f = m - p.validas;
+    return "Hola " + n + ", ya vas " + p.validas + " de " + m + " capacitaciones. Te " + (f === 1 ? "falta 1" : "faltan " + f) +
+           " y tienes " + hasta + " para ganar tu botella de acero, el adelanto de tu Empiece Ya. Te esperamos " + horariosTexto() + ".";
+  }
+  if (estadoBotella(p) === "por_entregar")
+    return "¡Felicitaciones " + n + "! Completaste tus " + m + " capacitaciones y ganaste tu botella de acero, el adelanto de tu Empiece Ya. Pasa por la oficina a recogerla.";
+  return "";
+}
+function linkWA(p) {
+  var cel = String(p.celular || "").replace(/\D/g, "");
+  if (cel.length === 11 && cel.indexOf("51") === 0) cel = cel.slice(2);
+  if (!/^9\d{8}$/.test(cel)) return null;
+  var msg = mensaje(p);
+  return "https://wa.me/51" + cel + (msg ? "?text=" + encodeURIComponent(msg) : "");
+}
+function botonWA(p, etiqueta) {
+  var u = linkWA(p);
+  if (!u) return "";
+  return '<a class="wa" href="' + esc(u) + '" target="_blank" rel="noopener" aria-label="' + esc(etiqueta || ("Escribir a " + pila(p.nombre))) + '">' + ICON_MSG + "</a>";
+}
+
+/* ---------------------------------------------------------- vistas */
+function render() {
+  var app = document.getElementById("app");
+  if (!S.token) { app.innerHTML = vistaLogin(); return; }
+  if (!S.d) {
+    app.innerHTML = '<main class="wrap centro">' + (S.errorCarga
+      ? '<p class="err">' + esc(S.errorCarga) + '</p><div class="fila-btn" style="justify-content:center"><button class="btn" data-a="recargar">Intentar de nuevo</button><button class="btn sec" data-a="salir">Salir</button></div>'
+      : '<p class="hint">Cargando…</p>') + "</main>";
+    return;
+  }
+  app.innerHTML = vistaCabecera() + '<main class="wrap">' + vistaTab() + "</main>";
+}
+
+function vistaLogin() {
+  return '<main class="login wrap">' +
+    '<div class="marca"><div class="cero"></div><div><div class="caps tiny">Empiece Ya · Equipo Arequipa</div><h1>Nivel Cero</h1></div></div>' +
+    '<p class="regla">5 capacitaciones en los primeros 30 días = botella de acero, el adelanto del Empiece Ya.</p>' +
+    '<form id="fLogin" class="card pad">' +
+      '<label class="lbl" for="clave">Clave de administrador</label>' +
+      '<input class="in" id="clave" type="password" autocomplete="current-password" placeholder="La misma del panel admin" required>' +
+      (S.loginError ? '<p class="err">' + esc(S.loginError) + "</p>" : "") +
+      '<button class="btn full" type="submit"' + (S.ocupado ? " disabled" : "") + ">" + (S.ocupado ? "Entrando…" : "Entrar") + "</button>" +
+    "</form></main>";
+}
+
+function vistaCabecera() {
+  var enCurso = 0, botellas = 0;
+  S.d.inscritos.forEach(function (p) {
+    if (p.estado === "en_curso") enCurso++;
+    if (estadoBotella(p) === "por_entregar" || descuento(p) === "pendiente") botellas++;
+  });
+  var tabs = [["asistencia", "Asistencia", 0], ["inscritos", "Inscritos", enCurso], ["botellas", "Botellas", botellas], ["numeros", "Números", 0]];
+  return '<header class="top"><div class="wrap fila-top">' +
+      '<div class="marca"><div class="cero"></div><div><div class="caps tiny">Empiece Ya · Equipo Arequipa</div><div class="h1">Nivel Cero</div></div></div>' +
+      '<div class="acciones-top"><button class="icono" data-a="recargar" title="Actualizar" aria-label="Actualizar">↻</button>' +
+      '<button class="lk claro" data-a="salir">Salir</button></div>' +
+    '</div><nav class="wrap tabs" role="tablist">' +
+      tabs.map(function (t) {
+        return '<button role="tab" aria-selected="' + (S.tab === t[0]) + '" class="tab' + (S.tab === t[0] ? " on" : "") + '" data-a="tab" data-tab="' + t[0] + '">' +
+          t[1] + (t[2] ? ' <span class="cuenta">' + t[2] + "</span>" : "") + "</button>";
+      }).join("") +
+    "</nav></header>";
+}
+
+function vistaTab() {
+  if (S.tab === "asistencia") return S.clase ? vistaClase() : vistaClases();
+  if (S.tab === "inscritos") return vistaInscritos();
+  if (S.tab === "botellas") return vistaBotellas();
+  return vistaNumeros();
+}
+
+/* ----- asistencia: elegir clase */
+function vistaClases() {
+  var h = hoy();
+  var deHoy = S.d.clases.filter(function (c) { return c.fecha === h; });
+  var otras = S.d.clases.filter(function (c) { return c.fecha !== h; });
+  var sugeridas = horarioDe(h).filter(function (x) { return !deHoy.some(function (c) { return c.hora === x.hora; }); });
+  var html = '<p class="regla">' + esc(reglaTexto()) + "</p>";
+  html += '<section class="card pad"><span class="lbl">Hoy · ' + esc(fLarga(h)) + "</span>";
+  html += deHoy.map(function (c) { return filaClase(c, true); }).join("");
+  html += sugeridas.map(function (x) {
+    return '<button class="btn grande full" data-a="claseHoy" data-hora="' + esc(x.hora) + '">Empezar la clase de las <span class="nw">' + esc(hora12(x.hora)) + "</span></button>";
+  }).join("");
+  if (!deHoy.length && !sugeridas.length) html += '<p class="hint">Hoy no hay capacitación en el horario habitual.</p>';
+  html += '<button class="btn sec full" data-a="nuevaClase">' + (deHoy.length || sugeridas.length ? "Otra hora u otro día" : "Nueva clase") + "</button>";
+  html += "</section>";
+  html += '<h2 class="sec-t">Clases anteriores</h2>';
+  if (!otras.length) {
+    html += '<p class="hint">Aún no hay clases anteriores. Si tienes asistencias en papel de las últimas semanas, crea esas clases con su fecha y márcalas: así suman dentro de los ' + cfg().dias_plazo + " días de cada persona.</p>";
+  } else {
+    var l = S.masClases ? otras : otras.slice(0, 12);
+    html += '<div class="lista">' + l.map(function (c) { return filaClase(c, false); }).join("") + "</div>";
+    if (otras.length > l.length) html += '<p><button class="lk" data-a="masClases">Ver ' + plural(otras.length - l.length, "clase más", "clases más") + "</button></p>";
+  }
+  return html;
+}
+function filaClase(c, deHoy) {
+  return '<button class="fila clase" data-a="abrirClase" data-id="' + c.id + '">' +
+    '<span class="cuerpo"><span class="nom">' + esc(deHoy ? "Clase de las " + hora12(c.hora) : fDia(c.fecha) + " · " + hora12(c.hora)) +
+      (c.tipo === "evento" ? ' <span class="tag">evento</span>' : "") + "</span>" +
+      (c.tema ? '<span class="sub">' + esc(c.tema) + "</span>" : "") + "</span>" +
+    '<span class="num">' + c.n + "<small>" + (c.n === 1 ? "asistente" : "asistentes") + "</small></span></button>";
+}
+
+/* ----- asistencia: tomar lista */
+function vistaClase() {
+  var c = claseDe(S.clase);
+  if (!c) { S.clase = null; return vistaClases(); }
+  var html = '<button class="lk volver" data-a="cerrarClase">← Clases</button>';
+  html += '<section class="card pad cab-clase"><div class="fila-top"><div><span class="lbl">' + (c.tipo === "evento" ? "Evento" : "Capacitación") + "</span>" +
+    '<div class="h2">' + esc(mayus(fLarga(c.fecha))) + '</div><div class="sub">' + esc(hora12(c.hora)) + (c.tema ? " · " + esc(c.tema) : "") + "</div></div>" +
+    '<div class="contador"><b>' + c.n + '</b><span class="caps tiny">' + (c.n === 1 ? "asistió" : "asistieron") + "</span></div></div>" +
+    '<button class="lk" data-a="editarClase" data-id="' + c.id + '">Editar o borrar la clase</button></section>';
+  if (c.fecha > hoy()) html += '<p class="aviso">Esta clase todavía no ocurre. Podrás marcar la asistencia desde el ' + esc(fLarga(c.fecha)) + ".</p>";
+  html += '<input class="in busca" type="search" data-in="buscaAsis" placeholder="Buscar por nombre" value="' + esc(S.buscaAsis) + '" autocomplete="off" enterkeyhint="search">';
+  html += '<div id="lista-asis">' + listaAsistencia(c) + "</div>";
+  html += '<label class="chk"><input type="checkbox" data-in="fuera"' + (S.fuera ? " checked" : "") + "> Mostrar también a quienes no están en su plazo</label>";
+  html += '<button class="btn sec full" data-a="nuevoManual" data-desde="clase">+ Agregar a alguien que no está en la lista</button>';
+  return html;
+}
+function listaAsistencia(c) {
+  var pres = IDX.presentes[c.id] || {}, q = plano(S.buscaAsis.trim());
+  var l = S.d.inscritos.filter(function (p) { return !p.excluido; });
+  if (q) l = l.filter(function (p) { return plano(p.nombre).indexOf(q) >= 0; });
+  var dentro = [], fuera = [];
+  l.forEach(function (p) { (enPlazo(p, c.fecha) ? dentro : fuera).push(p); });
+  fuera = fuera.filter(function (p) { return S.fuera || pres[p.id]; });   // a los marcados se les ve siempre
+  var orden = function (a, b) { return titulo(a.nombre).localeCompare(titulo(b.nombre), "es"); };
+  dentro.sort(orden); fuera.sort(orden);
+  var html = "";
+  if (!dentro.length && !fuera.length)
+    html += '<p class="hint">' + (q ? "Nadie con ese nombre." : "Nadie tiene su plazo abierto en esta fecha. Usa el botón de abajo o muestra a quienes están fuera de plazo.") + "</p>";
+  html += dentro.map(function (p) { return filaAsis(p, c, !!pres[p.id], true); }).join("");
+  if (fuera.length) html += '<h3 class="sec-t chico">Fuera de su plazo · no suman</h3>' + fuera.map(function (p) { return filaAsis(p, c, !!pres[p.id], false); }).join("");
+  return html;
+}
+function filaAsis(p, c, on, dentro) {
+  var sub;
+  if (p.estado === "logro") sub = "Ya ganó su botella";
+  else if (dentro) sub = (p.afiliador ? "De " + titulo(p.afiliador) + " · " : "") + "vence " + fCorta(p.vence);
+  else sub = "Su plazo: " + fCorta(p.inicio) + " al " + fCorta(p.vence);
+  return '<button class="fila asis' + (on ? " on" : "") + '" data-a="marcar" data-id="' + p.id + '" aria-pressed="' + on + '"' + (c.fecha > hoy() ? " disabled" : "") + ">" +
+    '<span class="caja" aria-hidden="true"></span>' +
+    '<span class="cuerpo"><span class="nom">' + esc(titulo(p.nombre)) + '</span><span class="sub">' + esc(sub) + "</span></span>" +
+    puntos(Math.min(p.validas, meta())) + "</button>";
+}
+
+/* ----- inscritos */
+function vistaInscritos() {
+  var cuenta = { en_curso: 0, logro: 0, vencio: 0, todos: S.d.inscritos.length };
+  S.d.inscritos.forEach(function (p) { if (cuenta[p.estado] != null) cuenta[p.estado]++; });
+  var chips = [["en_curso", "En curso"], ["logro", "Lograron"], ["vencio", "Vencieron"], ["todos", "Todos"]];
+  var html = '<div class="chips">' + chips.map(function (c) {
+    return '<button class="chip' + (S.filtro === c[0] ? " on" : "") + '" data-a="filtro" data-f="' + c[0] + '">' + c[1] + "<span>" + cuenta[c[0]] + "</span></button>";
+  }).join("") + "</div>";
+  html += '<input class="in busca" type="search" data-in="buscaIns" placeholder="Buscar por nombre o por quién lo afilió" value="' + esc(S.buscaIns) + '" autocomplete="off" enterkeyhint="search">';
+  html += '<div id="lista-ins">' + listaInscritos() + "</div>";
+  html += '<button class="btn sec full" data-a="nuevoManual">+ Agregar inscrito a mano</button>';
+  html += '<p class="hint">La lista sale de las afiliaciones del registro. Agrega a mano solo a quien se afilió por otro lado.</p>';
+  return html;
+}
+function listaInscritos() {
+  var q = plano(S.buscaIns.trim()), f = S.filtro;
+  var l = S.d.inscritos.filter(function (p) { return f === "todos" || p.estado === f; });
+  if (q) l = l.filter(function (p) { return plano(p.nombre + " " + (p.afiliador || "")).indexOf(q) >= 0; });
+  var orden = {
+    en_curso: function (a, b) { return a.vence.localeCompare(b.vence) || a.validas - b.validas; },
+    logro: function (a, b) { return String(b.logro_fecha || "").localeCompare(String(a.logro_fecha || "")); },
+    vencio: function (a, b) { return b.vence.localeCompare(a.vence); },
+    todos: function (a, b) { return b.fecha_inscripcion.localeCompare(a.fecha_inscripcion); }
+  }[f];
+  l.sort(orden);
+  if (!l.length) {
+    var vacio = { en_curso: "Nadie tiene el plazo abierto ahora.", logro: "Todavía nadie logró el Nivel Cero.", vencio: "Nadie venció su plazo sin lograrlo.", todos: "No hay inscritos." }[f];
+    return '<p class="hint">' + (q ? "Nadie con ese nombre." : vacio) + "</p>";
+  }
+  return l.map(filaInscrito).join("");
+}
+function filaInscrito(p) {
+  var e = lineaEstado(p);
+  return '<div class="fila ins" role="button" tabindex="0" data-a="persona" data-id="' + p.id + '">' +
+    '<span class="cuerpo"><span class="nom">' + esc(titulo(p.nombre)) + (p.origen === "manual" ? ' <span class="tag">a mano</span>' : "") + "</span>" +
+      '<span class="sub ' + e.cls + '">' + esc(e.txt) + "</span></span>" +
+    '<span class="der">' + puntos(Math.min(p.validas, meta())) + botonWA(p) + "</span></div>";
+}
+
+/* ----- botellas */
+function vistaBotellas() {
+  var por = [], desc = [], conEY = [], entregadas = [];
+  S.d.inscritos.forEach(function (p) {
+    var b = estadoBotella(p);
+    if (b === "por_entregar") por.push(p);
+    else if (b === "con_ey") conEY.push(p);
+    else if (b === "entregada") { entregadas.push(p); if (descuento(p) === "pendiente") desc.push(p); }
+  });
+  por.sort(function (a, b) { return String(a.logro_fecha).localeCompare(String(b.logro_fecha)); });
+  entregadas.sort(function (a, b) { return b.botella_entregada_en.localeCompare(a.botella_entregada_en); });
+  var html = '<p class="regla">La botella es el adelanto del Empiece Ya: si después gana el Empiece Ya, ese premio se le entrega sin botella.</p>';
+  html += seccion("Por entregar", por.length, por.length ? por.map(filaPorEntregar).join("") : '<p class="hint">No hay botellas pendientes.</p>');
+  if (desc.length) html += seccion("Descontar en su Empiece Ya", desc.length,
+    '<p class="hint">Ya recibieron su botella y ganaron el Empiece Ya: su premio va sin botella.</p>' + desc.map(filaDescontar).join(""));
+  if (conEY.length) html += seccion("Su botella viene con el Empiece Ya", conEY.length,
+    '<p class="hint">Ganaron el Empiece Ya antes de recibir su botella: no se entrega aparte.</p>' + conEY.map(filaConEY).join(""));
+  html += seccion("Entregadas", entregadas.length, entregadas.length ? entregadas.map(filaEntregada).join("") : '<p class="hint">Todavía no se entregó ninguna.</p>');
+  return html;
+}
+function seccion(t, n, cuerpo) {
+  return '<section class="bloque"><h2 class="sec-t">' + esc(t) + ' <span class="cuenta">' + n + "</span></h2>" + cuerpo + "</section>";
+}
+function cuerpoPersona(p, sub, extra) {
+  return '<span class="cuerpo" role="button" tabindex="0" data-a="persona" data-id="' + p.id + '"><span class="nom">' + esc(titulo(p.nombre)) + "</span>" +
+    '<span class="sub">' + esc(sub) + "</span>" + (extra || "") + "</span>";
+}
+function filaPorEntregar(p) {
+  return '<div class="fila bot">' + cuerpoPersona(p, "Logró el " + fCorta(p.logro_fecha)) +
+    '<span class="der">' + botonWA(p, "Avisar a " + pila(p.nombre) + " que la recoja") +
+    '<button class="btn ok sm" data-a="entregar" data-id="' + p.id + '">Entregué</button></span></div>';
+}
+function filaDescontar(p) {
+  return '<div class="fila bot">' + cuerpoPersona(p, "Empiece Ya " + etiquetaEY(p.ey) + " · botella entregada el " + fCorta(p.botella_entregada_en),
+      p.ey.premios ? '<span class="sub chico">' + esc(p.ey.premios) + "</span>" : "") +
+    '<span class="der"><button class="btn sm" data-a="descontar" data-id="' + p.id + '">Descontado</button></span></div>';
+}
+function filaConEY(p) {
+  return '<div class="fila bot">' + cuerpoPersona(p, "Logró el " + fCorta(p.logro_fecha) + " · Empiece Ya " + etiquetaEY(p.ey)) + "</div>";
+}
+function filaEntregada(p) {
+  var d = descuento(p);
+  return '<div class="fila bot">' + cuerpoPersona(p, "Entregada el " + fCorta(p.botella_entregada_en) +
+    (d === "hecho" ? " · descontada en su Empiece Ya" : d === "pendiente" ? " · falta descontar en su Empiece Ya" : "")) + "</div>";
+}
+
+/* ----- números */
+function vistaNumeros() {
+  var m = meta(), base = S.d.inscritos.filter(function (p) { return !p.excluido; });
+  var seg = base.filter(function (p) { return p.estado !== "sin_seguimiento"; });
+  var n = seg.length, c = { uno: 0, tres: 0, logro: 0, vencio: 0, curso: 0, ey: 0 }, dias = [];
+  seg.forEach(function (p) {
+    if (p.validas >= 1) c.uno++;
+    if (p.validas >= Math.min(3, m)) c.tres++;
+    if (p.estado === "logro") { c.logro++; if (p.logro_fecha) dias.push(diasEntre(p.inicio, p.logro_fecha)); }
+    else if (p.estado === "vencio") c.vencio++;
+    else if (p.estado === "en_curso") c.curso++;
+    if (ganoEY(p)) c.ey++;
+  });
+  var entregadas = 0, porEnt = 0;
+  S.d.inscritos.forEach(function (p) { if (p.botella_entregada_en) entregadas++; else if (estadoBotella(p) === "por_entregar") porEnt++; });
+  var cerrados = c.logro + c.vencio, eyH = S.d.ey_hasta;
+  var html = "";
+  if (!S.d.primera_clase) html += '<p class="aviso">Todavía no hay clases registradas. Los números empiezan a contar desde la primera clase que tomes.</p>';
+  html += '<div class="kpis">' +
+    kpi("Inscritos con seguimiento", n, S.d.primera_clase ? "desde el " + fCorta(S.d.primera_clase) : "aún sin clases") +
+    kpi("Fueron a 1 clase o más", c.uno, n ? pct(c.uno, n) + "% de los inscritos" : "—") +
+    kpi("Lograron el Nivel Cero", c.logro, cerrados ? pct(c.logro, cerrados) + "% de quienes cerraron su plazo" : "nadie cerró su plazo aún") +
+    kpi("Con el plazo abierto", c.curso, c.curso ? "pueden lograrlo todavía" : "—") +
+    kpi("Botellas entregadas", entregadas, porEnt ? porEnt + " por entregar" : "ninguna pendiente") +
+    kpi("Ganaron Empiece Ya", c.ey, eyH ? "cargado hasta el PB" + eyH.pb + " (" + fCorta(eyH.fecha) + ")" : "sin resultados cargados") +
+    "</div>";
+  var pasos = [["Inscritos", n], ["Fueron a 1 clase o más", c.uno], ["Llegaron a " + Math.min(3, m) + " clases", c.tres], ["Lograron las " + m, c.logro], ["Ganaron Empiece Ya", c.ey]];
+  html += '<section class="card pad bloque"><h2 class="sec-t" style="margin-top:0">Embudo</h2>' + pasos.map(function (s, i) {
+    var w = n ? Math.max(s[1] ? 2 : 0, pct(s[1], n)) : 0;
+    return '<div class="barra"><div class="barra-t"><span>' + esc(s[0]) + "</span><b>" + s[1] + (n && i ? " <small>" + pct(s[1], n) + "%</small>" : "") + "</b></div>" +
+      '<div class="barra-f"><i style="width:' + w + '%"></i></div></div>';
+  }).join("") + (dias.length ? '<p class="hint">Quienes lo logran tardan en promedio ' + plural(Math.round(dias.reduce(function (a, b) { return a + b; }, 0) / dias.length), "día", "días") + ".</p>" : "") + "</section>";
+  html += bloqueComparacion(seg, eyH);
+  html += bloqueMeses(base);
+  html += bloqueHorarios();
+  html += bloqueAfiliadores(seg);
+  var sinSeg = base.length - seg.length;
+  if (sinSeg) html += '<p class="hint">' + plural(sinSeg, "inscrito", "inscritos") + " de antes del " + (S.d.primera_clase ? fCorta(S.d.primera_clase) : "seguimiento") +
+    (sinSeg === 1 ? " no tiene asistencias registradas y no entra" : " no tienen asistencias registradas y no entran") +
+    " en los porcentajes. Si tienes sus asistencias en papel, crea esas clases con su fecha y márcalas.</p>";
+  return html;
+}
+function kpi(t, v, s) {
+  return '<div class="kpi card"><span class="lbl">' + esc(t) + "</span><b>" + v + '</b><span class="hint">' + esc(s) + "</span></div>";
+}
+function bloqueComparacion(seg, eyH) {
+  var h = '<section class="card pad bloque"><h2 class="sec-t" style="margin-top:0">¿El Nivel Cero empuja el Empiece Ya?</h2>';
+  if (!eyH) return h + '<p class="hint">Aún no hay resultados del Empiece Ya cargados.</p></section>';
+  var ev = seg.filter(function (p) { return (p.estado === "logro" || p.estado === "vencio") && diasEntre(p.fecha_inscripcion, eyH.fecha) >= 42; });
+  var nota = "Cuenta solo a quienes se inscribieron al menos 6 semanas antes del último Empiece Ya cargado (PB" + eyH.pb + ", " + fCorta(eyH.fecha) + "), para que hayan tenido su tiempo completo.";
+  if (!ev.length) return h + '<p class="hint">Todavía no hay a quién medir. ' + esc(nota) + "</p></section>";
+  var con = ev.filter(function (p) { return p.estado === "logro"; }), sin = ev.filter(function (p) { return p.estado !== "logro"; });
+  var a = con.filter(ganoEY).length, b = sin.filter(ganoEY).length;
+  h += '<div class="comp"><div><span class="lbl">Con Nivel Cero</span><b>' + (con.length ? pct(a, con.length) + "%" : "—") + '</b><span class="hint">' + a + " de " + con.length + " ganaron su Empiece Ya</span></div>" +
+    '<div><span class="lbl">Sin Nivel Cero</span><b>' + (sin.length ? pct(b, sin.length) + "%" : "—") + '</b><span class="hint">' + b + " de " + sin.length + " ganaron su Empiece Ya</span></div></div>";
+  return h + '<p class="hint">' + esc(nota) + "</p></section>";
+}
+function bloqueMeses(base) {
+  var g = {};
+  base.forEach(function (p) {
+    var k = p.fecha_inscripcion.slice(0, 7), r = g[k] || (g[k] = { ins: 0, sin: 0, fue: 0, logro: 0, curso: 0, ey: 0 });
+    r.ins++;
+    if (p.estado === "sin_seguimiento") r.sin++;
+    if (p.validas >= 1) r.fue++;
+    if (p.estado === "logro") r.logro++;
+    if (p.estado === "en_curso") r.curso++;
+    if (ganoEY(p)) r.ey++;
+  });
+  var ks = Object.keys(g).sort().reverse();
+  if (!ks.length) return "";
+  return '<section class="card pad bloque"><h2 class="sec-t" style="margin-top:0">Por mes de inscripción</h2><div class="tabla-x"><table class="t">' +
+    "<thead><tr><th>Mes</th><th>Inscritos</th><th>Fueron</th><th>Lograron</th><th>Emp. Ya</th></tr></thead><tbody>" +
+    ks.map(function (k) {
+      var r = g[k], notas = [];
+      if (r.curso) notas.push(r.curso + " en curso");
+      if (r.sin) notas.push(r.sin + " sin seguimiento");
+      return "<tr><td>" + esc(fMes(k)) + (notas.length ? '<div class="hint">' + esc(notas.join(" · ")) + "</div>" : "") + "</td><td>" + r.ins + "</td><td>" + r.fue +
+        "</td><td><b>" + r.logro + "</b></td><td>" + r.ey + "</td></tr>";
+    }).join("") + "</tbody></table></div></section>";
+}
+function bloqueHorarios() {
+  var g = {}, h = hoy();
+  S.d.clases.forEach(function (c) {
+    if (c.fecha > h) return;
+    var d = dow(c.fecha), k = d + "|" + c.hora, r = g[k] || (g[k] = { dia: d, hora: c.hora, clases: 0, total: 0 });
+    r.clases++; r.total += c.n;
+  });
+  var l = Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return b.total / b.clases - a.total / a.clases; });
+  if (!l.length) return "";
+  return '<section class="card pad bloque"><h2 class="sec-t" style="margin-top:0">Asistencia por horario</h2><table class="t"><thead><tr><th>Horario</th><th>Clases</th><th>Promedio</th></tr></thead><tbody>' +
+    l.map(function (r) {
+      return "<tr><td>" + esc(mayus(DIAS[r.dia]) + " " + hora12(r.hora)) + "</td><td>" + r.clases + "</td><td><b>" + (Math.round(r.total * 10 / r.clases) / 10) + "</b></td></tr>";
+    }).join("") + '</tbody></table><p class="hint">Promedio de nuevos que asisten por clase.</p></section>';
+}
+function bloqueAfiliadores(seg) {
+  var g = {};
+  seg.forEach(function (p) {
+    var k = p.afiliador ? titulo(p.afiliador) : "Sin dato", r = g[k] || (g[k] = { n: 0, fue: 0, logro: 0 });
+    r.n++; if (p.validas >= 1) r.fue++; if (p.estado === "logro") r.logro++;
+  });
+  var l = Object.keys(g).map(function (k) { return [k, g[k]]; }).sort(function (a, b) { return b[1].n - a[1].n || b[1].logro - a[1].logro; }).slice(0, 10);
+  if (!l.length) return "";
+  return '<section class="card pad bloque"><h2 class="sec-t" style="margin-top:0">Por quién los afilió</h2><table class="t"><thead><tr><th>Afiliador</th><th>Inscritos</th><th>Fueron</th><th>Lograron</th></tr></thead><tbody>' +
+    l.map(function (x) { return "<tr><td>" + esc(x[0]) + "</td><td>" + x[1].n + "</td><td>" + x[1].fue + "</td><td><b>" + x[1].logro + "</b></td></tr>"; }).join("") +
+    "</tbody></table></section>";
+}
+
+/* ---------------------------------------------------------- modales */
+function abrirModal(md) {
+  if (md.tipo === "clase") {
+    var c = md.id ? claseDe(md.id) : null, hs = horarios();
+    md.fecha = c ? c.fecha : hoy();
+    md.hora = c ? c.hora : ((horarioDe(md.fecha)[0] || {}).hora || null);
+    md.otra = c ? !hs.some(function (x) { return x.hora === c.hora; }) : false;
+    md.horaOtra = md.otra && c ? c.hora : "";
+    md.tipoC = c ? c.tipo : "capacitacion";
+    md.tema = c ? (c.tema || "") : "";
+    md.horaElegida = !!c;
+  }
+  S.modal = md;
+  renderModal();
+  var f = document.querySelector(".modal input:not([type=date]):not([type=time]):not([type=checkbox])");
+  if (f && md.tipo === "manual" && !md.id) f.focus();
+}
+function cerrarModal() { S.modal = null; S.ocupado = false; renderModal(); }
+function renderModal() {
+  var capa = document.getElementById("capa");
+  if (!S.modal || !S.d) { capa.innerHTML = ""; document.body.classList.remove("con-modal"); return; }
+  var t = S.modal.tipo;
+  var cont = t === "persona" ? modalPersona() : t === "clase" ? modalClase() : t === "manual" ? modalManual() : modalConfirmar();
+  capa.innerHTML = '<div class="ov" data-a="fondo"><div class="modal" role="dialog" aria-modal="true">' + cont + "</div></div>";
+  document.body.classList.add("con-modal");
+}
+function refrescarModal() {
+  var caja = document.querySelector("#capa .modal");
+  var y = caja ? caja.scrollTop : 0;
+  renderModal();
+  caja = document.querySelector("#capa .modal");
+  if (caja) caja.scrollTop = y;
+}
+function leerForm() {
+  var md = S.modal;
+  if (!md) return;
+  if (md.tipo === "clase") {
+    md.fecha = val("fFecha") || md.fecha;
+    md.tema = val("fTema");
+    md.horaOtra = val("fHora") || md.horaOtra;
+  } else if (md.tipo === "manual") {
+    md.vals = { nombre: val("mNombre"), celular: val("mCelular"), fecha_inscripcion: val("mFecha"),
+                afiliador: val("mAfiliador"), codigo_rw: val("mCodigo"), dni: val("mDni") };
+  }
+}
+function cabModal(titulo1, etiqueta) {
+  return '<div class="mhead"><div>' + (etiqueta ? '<span class="lbl">' + esc(etiqueta) + "</span>" : "") + '<div class="h2">' + esc(titulo1) + "</div></div>" +
+    '<button class="x" data-a="cerrarModal" aria-label="Cerrar">×</button></div>';
+}
+
+function modalPersona() {
+  var p = IDX.ins[S.modal.id];
+  if (!p) return cabModal("No encontrado") + '<div class="mbody"><p class="hint">Esta persona ya no está en la lista.</p></div>';
+  var e = lineaEstado(p), m = meta(), ed = S.modal.editar || null, wa = linkWA(p);
+  var h = cabModal(titulo(p.nombre), p.origen === "manual" ? "Agregado a mano" : "Del registro de afiliaciones") + '<div class="mbody">';
+  h += '<div class="estado ' + e.cls + '">' + esc(e.txt) + "</div>";
+  h += '<dl class="datos">';
+  h += "<dt>Afiliado por</dt><dd>" + esc(p.afiliador ? titulo(p.afiliador) : "—") + "</dd>";
+  h += "<dt>Celular</dt><dd>" + (p.celular ? esc(p.celular) + (wa ? ' · <a class="lk" href="' + esc(wa) + '" target="_blank" rel="noopener">' + (mensaje(p) ? "WhatsApp con mensaje" : "WhatsApp") + "</a>" : "") : "—") + "</dd>";
+  var EST_REG = { nuevo: "afiliación por revisar", revisado: "afiliación revisada", ingresado: "ingresada a Rena Ware", procesado: "procesada en Rena Ware" };
+  h += "<dt>Inscripción</dt><dd>" + esc(fCorta(p.fecha_inscripcion)) + (p.estado_registro ? ' <span class="hint">· ' + esc(EST_REG[p.estado_registro] || p.estado_registro) + "</span>" : "") + "</dd>";
+  h += "<dt>Plazo</dt><dd>" + esc(fCorta(p.inicio) + " al " + fCorta(p.vence)) + (p.inicio_editado ? ' <span class="tag">corregido</span>' : "");
+  if (ed === "inicio")
+    h += '<div class="edit"><input class="in" type="date" id="eInicio" value="' + esc(p.inicio) + '" max="' + hoy() + '"><div class="fila-btn">' +
+      '<button class="btn sm" data-a="guardarInicio">Guardar</button>' + (p.inicio_editado ? '<button class="btn sec sm" data-a="restaurarInicio">Volver a la inscripción</button>' : "") +
+      '<button class="lk" data-a="editar" data-e="">Cancelar</button></div><p class="hint">Corrige el inicio si empezó antes o después de la fecha del registro.</p></div>';
+  else h += ' <button class="lk" data-a="editar" data-e="inicio">Corregir inicio</button>';
+  h += "</dd>";
+  h += "<dt>Clases</dt><dd>" + puntos(Math.min(p.validas, m)) + " <b>" + p.validas + " de " + m + "</b>" +
+    (p.total > p.validas ? ' <span class="hint">y ' + (p.total - p.validas) + " fuera de plazo</span>" : "") + listaClasesPersona(p) + "</dd>";
+  h += "<dt>Código RW</dt><dd>" + (p.codigo ? esc(p.codigo) + (p.codigo_editado ? ' <span class="tag">a mano</span>' : "") : '<span class="hint">sin código todavía</span>');
+  if (ed === "codigo")
+    h += '<div class="edit"><input class="in" id="eCodigo" inputmode="numeric" value="' + esc(p.codigo || "") + '" placeholder="Ej. 1769942"><div class="fila-btn">' +
+      '<button class="btn sm" data-a="guardarCodigo">Guardar</button><button class="lk" data-a="editar" data-e="">Cancelar</button></div>' +
+      '<p class="hint">Con el código se cruza con los ganadores del Empiece Ya.</p></div>';
+  else h += ' <button class="lk" data-a="editar" data-e="codigo">' + (p.codigo ? "Cambiar" : "Agregar") + "</button>";
+  h += "</dd>";
+  h += "<dt>Empiece Ya</dt><dd>" + (ganoEY(p)
+    ? "Ganó en el " + esc(etiquetaEY(p.ey)) + (p.ey.por === "nombre" ? ' <span class="tag">por nombre</span>' : "") + (p.ey.premios ? '<div class="hint">' + esc(p.ey.premios) + "</div>" : "")
+    : '<span class="hint">Aún no figura entre los ganadores' + (S.d.ey_hasta ? " (cargado hasta el PB" + S.d.ey_hasta.pb + ")" : "") + "</span>") + "</dd>";
+  h += "<dt>Botella</dt><dd>" + bloqueBotella(p, ed) + "</dd>";
+  h += "</dl>";
+  h += '<label class="lbl" for="eNota">Nota</label><textarea class="in" id="eNota" rows="2" placeholder="Algo que conviene recordar">' + esc(p.nota || "") + "</textarea>" +
+    '<div class="fila-btn"><button class="btn sec sm" data-a="guardarNota">Guardar nota</button></div>';
+  h += '<div class="pie">';
+  if (p.origen === "manual") h += '<button class="btn sec sm" data-a="editarManual" data-id="' + p.id + '">Editar datos</button><button class="btn sec sm peligro" data-a="borrarManual" data-id="' + p.id + '">Borrar</button>';
+  h += p.excluido
+    ? '<button class="btn sec sm" data-a="excluir" data-v="0">Volver a incluir en el Nivel Cero</button>'
+    : '<button class="lk" data-a="excluir" data-v="1">Sacar del Nivel Cero (duplicado o no aplica)</button>';
+  return h + "</div></div>";
+}
+function listaClasesPersona(p) {
+  if (!p.asistencias || !p.asistencias.length) return "";
+  return '<ul class="clases-p">' + p.asistencias.map(function (a) {
+    var c = claseDe(a.c);
+    if (!c) return "";
+    return "<li>" + esc(fDia(c.fecha) + " · " + hora12(c.hora)) + (a.v ? "" : ' <span class="tag gris">no suma</span>') + "</li>";
+  }).join("") + "</ul>";
+}
+function bloqueBotella(p, ed) {
+  var b = estadoBotella(p), h = "";
+  if (b === "entregada") {
+    h += "Entregada el " + esc(fCorta(p.botella_entregada_en)) + ' <button class="lk" data-a="deshacerEntrega">Deshacer</button>';
+    var d = descuento(p);
+    if (d === "pendiente") h += '<div class="aviso chico">Ganó el Empiece Ya: su premio va sin botella.<div class="fila-btn"><button class="btn sm" data-a="descontar" data-id="' + p.id + '">Ya lo descontamos</button></div></div>';
+    if (d === "hecho") h += '<div class="hint">Descontada en su Empiece Ya el ' + esc(fCorta(p.ey_descontado_en)) + ' <button class="lk" data-a="deshacerDescuento">Deshacer</button></div>';
+  } else if (b === "con_ey") {
+    h += "Viene con su premio del Empiece Ya: no se entrega aparte.";
+  } else if (b === "por_entregar") {
+    h += "Por entregar · logró el " + esc(fCorta(p.logro_fecha));
+    if (ed === "botella")
+      h += '<div class="edit"><input class="in" type="date" id="eBotella" value="' + hoy() + '" max="' + hoy() + '"><div class="fila-btn">' +
+        '<button class="btn ok sm" data-a="guardarBotella">Guardar</button><button class="lk" data-a="editar" data-e="">Cancelar</button></div></div>';
+    else h += '<div class="fila-btn"><button class="btn ok sm" data-a="entregar" data-id="' + p.id + '">Entregué hoy</button><button class="lk" data-a="editar" data-e="botella">Fue otro día</button></div>';
+  } else {
+    var falta = meta() - p.validas;
+    h += '<span class="hint">' + (p.estado === "en_curso" ? "Le " + (falta === 1 ? "falta 1 clase" : "faltan " + falta + " clases") : "No la ganó") + "</span>";
+  }
+  return h;
+}
+
+function modalClase() {
+  var md = S.modal, c = md.id ? claseDe(md.id) : null, hs = horarios();
+  var h = cabModal(c ? "Editar clase" : "Nueva clase") + '<div class="mbody">';
+  h += '<label class="lbl" for="fFecha">Fecha</label><input class="in" type="date" id="fFecha" value="' + esc(md.fecha) + '" max="' + sumarDias(hoy(), 60) + '">';
+  h += '<span class="lbl mt">Hora</span><div class="chips" id="chipsHora">' + chipsHora(hs, md.hora, md.otra) + "</div>";
+  h += '<div id="otraHora" class="mt"' + (md.otra ? "" : " hidden") + '><input class="in" type="time" id="fHora" value="' + esc(md.horaOtra || "") + '"></div>';
+  h += '<p class="hint">Horario habitual: ' + esc(horariosTexto().replace(/^el /, "").replace(/ el /g, " ").replace(/ a las /g, " ")) + ".</p>";
+  h += '<span class="lbl mt">Tipo</span><div class="chips">' + [["capacitacion", "Capacitación"], ["evento", "Evento"]].map(function (t) {
+    return '<button type="button" class="chip' + (md.tipoC === t[0] ? " on" : "") + '" data-a="tipoClase" data-t="' + t[0] + '">' + t[1] + "</button>";
+  }).join("") + "</div>";
+  h += '<label class="lbl mt" for="fTema">Tema (opcional)</label><input class="in" id="fTema" value="' + esc(md.tema || "") + '" placeholder="Ej. Tu primera demostración" autocomplete="off">';
+  if (md.error) h += '<p class="err">' + esc(md.error) + "</p>";
+  h += '<div class="fila-btn mt"><button class="btn" data-a="guardarClase"' + (S.ocupado ? " disabled" : "") + ">" + (c ? "Guardar" : "Crear y tomar asistencia") + "</button>" +
+    '<button class="btn sec" data-a="cerrarModal">Cancelar</button></div>';
+  if (c) h += '<div class="pie"><button class="lk peligro" data-a="borrarClase" data-id="' + c.id + '">Borrar esta clase' + (c.n ? " y sus " + plural(c.n, "asistencia", "asistencias") : "") + "</button></div>";
+  return h + "</div>";
+}
+function chipsHora(hs, sel, otra) {
+  var vistas = {}, horas = [];
+  hs.forEach(function (x) { if (!vistas[x.hora]) { vistas[x.hora] = 1; horas.push(x.hora); } });
+  horas.sort();
+  return horas.map(function (hh) {
+    return '<button type="button" class="chip' + (!otra && sel === hh ? " on" : "") + '" data-a="horaClase" data-h="' + esc(hh) + '">' + esc(hora12(hh)) + "</button>";
+  }).join("") + '<button type="button" class="chip' + (otra ? " on" : "") + '" data-a="horaClase" data-h="otra">Otra hora</button>';
+}
+function actualizarChipsHora() {
+  var md = S.modal, box = document.getElementById("chipsHora"), o = document.getElementById("otraHora");
+  if (box) box.innerHTML = chipsHora(horarios(), md.hora, md.otra);
+  if (o) o.hidden = !md.otra;
+}
+
+function modalManual() {
+  var md = S.modal, p = md.id ? IDX.ins[md.id] : null, v = md.vals || {};
+  var c = md.desdeClase ? claseDe(md.desdeClase) : null;
+  function dato(k, def) { return v[k] != null ? v[k] : (p ? (p[k] || "") : (def || "")); }
+  var h = cabModal(p ? "Editar inscrito" : "Agregar inscrito") + '<div class="mbody">';
+  if (!p) h += '<p class="hint" style="margin-top:0">Solo para quien no entró por el registro de afiliaciones: los del registro aparecen solos.</p>';
+  h += campo("mNombre", "Nombre y apellidos", dato("nombre"), 'autocomplete="off" autocapitalize="words"');
+  h += campo("mCelular", "Celular", dato("celular"), 'inputmode="tel" placeholder="9xx xxx xxx" autocomplete="off"');
+  h += campo("mFecha", "Fecha de inscripción", dato("fecha_inscripcion", c ? c.fecha : hoy()), 'type="date" max="' + hoy() + '"');
+  h += campo("mAfiliador", "Afiliado por (opcional)", dato("afiliador"), 'autocomplete="off"');
+  h += campo("mCodigo", "Código Rena Ware (opcional)", v.codigo_rw != null ? v.codigo_rw : (p ? (p.codigo || "") : ""), 'inputmode="numeric" autocomplete="off"');
+  h += campo("mDni", "DNI (opcional)", dato("dni"), 'inputmode="numeric" autocomplete="off"');
+  if (c && !p) h += '<p class="hint">Quedará marcado como presente en la clase del ' + esc(fLarga(c.fecha)) + ".</p>";
+  if (md.error) h += '<p class="err">' + esc(md.error) + "</p>";
+  h += '<div class="fila-btn mt"><button class="btn" data-a="guardarManual"' + (S.ocupado ? " disabled" : "") + ">Guardar</button>" +
+    '<button class="btn sec" data-a="cerrarModal">Cancelar</button></div></div>';
+  return h;
+}
+function campo(id, lbl, valor, extra) {
+  return '<label class="lbl mt" for="' + id + '">' + esc(lbl) + '</label><input class="in" id="' + id + '" value="' + esc(valor) + '" ' + (extra || "") + ">";
+}
+
+function confirmar(texto, si, accion) {
+  var antes = S.modal;
+  S.modal = { tipo: "confirmar", texto: texto, si: si, accion: accion, volver: antes };
+  renderModal();
+}
+function modalConfirmar() {
+  var md = S.modal;
+  return cabModal("¿Seguro?") + '<div class="mbody"><p style="margin-top:0;line-height:1.5">' + esc(md.texto) + "</p>" +
+    (md.error ? '<p class="err">' + esc(md.error) + "</p>" : "") +
+    '<div class="fila-btn mt"><button class="btn peligro sec" data-a="confirmarSi"' + (S.ocupado ? " disabled" : "") + ">" + esc(md.si) + "</button>" +
+    '<button class="btn sec" data-a="confirmarNo">Cancelar</button></div></div>';
+}
+
+/* ---------------------------------------------------------- acciones */
+function aviso(msg, tipo) {
+  var t = document.getElementById("toast");
+  if (!t) return;
+  t.textContent = msg;
+  t.className = "toast on " + (tipo || "");
+  clearTimeout(aviso.t);
+  aviso.t = setTimeout(function () { t.className = "toast " + (tipo || ""); }, 2800);
+}
+
+function marcar(id) {
+  var c = claseDe(S.clase);
+  if (!c || c.fecha > hoy()) return;
+  var clave = c.id + ":" + id;
+  if (enVuelo[clave]) return;
+  enVuelo[clave] = true;
+  var pres = IDX.presentes[c.id] || (IDX.presentes[c.id] = {});
+  var nuevo = !pres[id], antes = IDX.ins[id] ? IDX.ins[id].validas : 0;
+  if (nuevo) pres[id] = true; else delete pres[id];
+  c.n += nuevo ? 1 : -1;
+  pintarAsis(id);
+  rpc("n0_marcar", { p_token: S.token, p_clase: c.id, p_inscrito: id, p_presente: nuevo }).then(function (r) {
+    var k = claseDe(r.clase_id); if (k) k.n = r.n;
+    parchar(r.inscrito);
+    var p = r.inscrito;
+    if (nuevo && p && antes < meta() && p.validas >= meta()) aviso("¡" + pila(p.nombre) + " completó sus " + meta() + " clases! Ganó su botella.", "ok");
+  }).catch(function (e) {
+    if (nuevo) delete pres[id]; else pres[id] = true;
+    c.n += nuevo ? -1 : 1;
+    if (S.token) aviso(bonito(e.message), "mal");
+  }).then(function () {
+    delete enVuelo[clave];
+    if (S.token) pintarAsis(id);
+  });
+}
+/* Al marcar solo se repinta esa fila, el contador y las pestañas: la lista no salta. */
+function pintarAsis(id) {
+  var c = claseDe(S.clase), p = IDX.ins[id];
+  if (!c || !p) return;
+  var btn = document.querySelector('.fila.asis[data-id="' + id + '"]');
+  if (btn) {
+    var tmp = document.createElement("div");
+    tmp.innerHTML = filaAsis(p, c, !!(IDX.presentes[c.id] || {})[id], enPlazo(p, c.fecha));
+    btn.replaceWith(tmp.firstChild);
+  }
+  var cont = document.querySelector(".contador");
+  if (cont) cont.innerHTML = "<b>" + c.n + '</b><span class="caps tiny">' + (c.n === 1 ? "asistió" : "asistieron") + "</span>";
+  var cab = document.querySelector("header.top");
+  if (cab) {
+    var t2 = document.createElement("div");
+    t2.innerHTML = vistaCabecera();
+    cab.replaceWith(t2.firstChild);
+  }
+}
+
+function crearClaseHoy(hora) {
+  if (S.ocupado) return;
+  S.ocupado = true;
+  rpc("n0_clase_guardar", { p_token: S.token, p_id: null, p_fecha: hoy(), p_hora: hora, p_tema: null, p_tipo: "capacitacion" }).then(function (k) {
+    S.ocupado = false; ponerClase(k);
+    S.clase = k.id; S.buscaAsis = ""; S.fuera = false;
+    render(); window.scrollTo(0, 0);
+    aviso("Clase lista: toca a quienes llegaron", "ok");
+    cargar(true);
+  }).catch(function (e) { S.ocupado = false; if (S.token) aviso(bonito(e.message), "mal"); });
+}
+
+function guardarClase() {
+  leerForm();
+  var md = S.modal, c = md.id ? claseDe(md.id) : null;
+  var hora = md.otra ? md.horaOtra : md.hora;
+  md.error = null;
+  if (!md.fecha) { md.error = "Elige la fecha."; return refrescarModal(); }
+  if (!hora) { md.error = "Elige la hora."; return refrescarModal(); }
+  S.ocupado = true; refrescarModal();
+  rpc("n0_clase_guardar", { p_token: S.token, p_id: c ? c.id : null, p_fecha: md.fecha, p_hora: hora, p_tema: md.tema || null, p_tipo: md.tipoC }).then(function (k) {
+    S.ocupado = false; ponerClase(k);
+    S.modal = null; renderModal();
+    S.tab = "asistencia"; S.clase = k.id; S.buscaAsis = ""; S.fuera = false;
+    render(); window.scrollTo(0, 0);
+    aviso(c ? "Clase guardada" : "Clase lista: toca a quienes llegaron", "ok");
+    cargar(true);
+  }).catch(function (e) {
+    S.ocupado = false;
+    if (S.modal === md) { md.error = bonito(e.message); refrescarModal(); }
+  });
+}
+
+function guardarEstado(cambios, msg, id) {
+  var pid = id || (S.modal && S.modal.id);
+  if (!pid || S.ocupado) return Promise.resolve(false);
+  S.ocupado = true;
+  return rpc("n0_estado_guardar", { p_token: S.token, p_inscrito: pid, p_cambios: cambios }).then(function (p) {
+    S.ocupado = false; parchar(p);
+    if (S.modal && S.modal.tipo === "persona" && S.modal.id === pid) { S.modal.editar = null; refrescarModal(); }
+    render(); aviso(msg, "ok");
+    return true;
+  }).catch(function (e) {
+    S.ocupado = false;
+    if (S.token) aviso(bonito(e.message), "mal");
+    return false;
+  });
+}
+
+function guardarManual() {
+  leerForm();
+  var md = S.modal, v = md.vals, p = md.id ? IDX.ins[md.id] : null;
+  md.error = null;
+  if (!v.nombre.trim()) { md.error = "Escribe el nombre."; return refrescarModal(); }
+  if (!v.fecha_inscripcion) { md.error = "Falta la fecha de inscripción."; return refrescarModal(); }
+  S.ocupado = true; refrescarModal();
+  rpc("n0_manual_guardar", { p_token: S.token, p_id: p ? p.id : null, p_datos: v }).then(function (fila) {
+    parchar(fila);
+    if (md.desdeClase && !p) {
+      return rpc("n0_marcar", { p_token: S.token, p_clase: md.desdeClase, p_inscrito: fila.id, p_presente: true }).then(function (r) {
+        var k = claseDe(r.clase_id); if (k) k.n = r.n;
+        parchar(r.inscrito);
+        return fila;
+      });
+    }
+    return fila;
+  }).then(function (fila) {
+    S.ocupado = false; S.modal = null; renderModal(); render();
+    aviso(p ? "Datos guardados" : titulo(fila.nombre) + " quedó en la lista", "ok");
+  }).catch(function (e) {
+    S.ocupado = false;
+    if (S.modal === md) { md.error = bonito(e.message); refrescarModal(); }
+  });
+}
+
+var ACC = {
+  tab: function (el) { S.tab = el.getAttribute("data-tab"); render(); window.scrollTo(0, 0); },
+  salir: function () { cerrarSesion(null); },
+  recargar: function () { cargar(); aviso("Actualizando…"); },
+  abrirClase: function (el) { S.clase = el.getAttribute("data-id"); S.buscaAsis = ""; S.fuera = false; render(); window.scrollTo(0, 0); },
+  cerrarClase: function () { S.clase = null; render(); },
+  masClases: function () { S.masClases = true; render(); },
+  claseHoy: function (el) { crearClaseHoy(el.getAttribute("data-hora")); },
+  nuevaClase: function () { abrirModal({ tipo: "clase", id: null }); },
+  editarClase: function (el) { abrirModal({ tipo: "clase", id: el.getAttribute("data-id") }); },
+  horaClase: function (el) {
+    leerForm();
+    var h = el.getAttribute("data-h");
+    S.modal.horaElegida = true;
+    if (h === "otra") S.modal.otra = true; else { S.modal.otra = false; S.modal.hora = h; }
+    actualizarChipsHora();
+    if (S.modal.otra) { var t = document.getElementById("fHora"); if (t) t.focus(); }
+  },
+  tipoClase: function (el) { leerForm(); S.modal.tipoC = el.getAttribute("data-t"); refrescarModal(); },
+  guardarClase: guardarClase,
+  borrarClase: function (el) {
+    var c = claseDe(el.getAttribute("data-id"));
+    if (!c) return;
+    confirmar("Se borra la clase del " + fLarga(c.fecha) + " a las " + hora12(c.hora) + (c.n ? " y se quitan sus " + plural(c.n, "asistencia", "asistencias") : "") + ".", "Sí, borrar", function () {
+      return rpc("n0_clase_borrar", { p_token: S.token, p_id: c.id }).then(function () {
+        S.clase = null; S.modal = null; renderModal();
+        aviso("Clase borrada", "ok");
+        return cargar(true);
+      });
+    });
+  },
+  marcar: function (el) { marcar(el.getAttribute("data-id")); },
+  filtro: function (el) { S.filtro = el.getAttribute("data-f"); render(); },
+  persona: function (el) { abrirModal({ tipo: "persona", id: el.getAttribute("data-id") }); },
+  cerrarModal: cerrarModal,
+  fondo: cerrarModal,
+  editar: function (el) { S.modal.editar = el.getAttribute("data-e") || null; refrescarModal(); },
+  guardarInicio: function () { var v = val("eInicio"); if (v) guardarEstado({ fecha_inicio: v }, "Inicio corregido"); },
+  restaurarInicio: function () { guardarEstado({ fecha_inicio: null }, "Volvió a la fecha del registro"); },
+  guardarCodigo: function () { guardarEstado({ codigo_rw: val("eCodigo") }, "Código guardado"); },
+  guardarNota: function () { guardarEstado({ nota: val("eNota") }, "Nota guardada"); },
+  entregar: function (el) { var p = IDX.ins[el.getAttribute("data-id")]; guardarEstado({ botella_entregada_en: hoy() }, "Botella entregada" + (p ? " a " + pila(p.nombre) : ""), el.getAttribute("data-id")); },
+  guardarBotella: function () { var v = val("eBotella"); if (v) guardarEstado({ botella_entregada_en: v }, "Botella entregada"); },
+  deshacerEntrega: function () { guardarEstado({ botella_entregada_en: null, ey_descontado_en: null }, "Entrega deshecha"); },
+  descontar: function (el) { guardarEstado({ ey_descontado_en: hoy() }, "Descuento registrado", el.getAttribute("data-id")); },
+  deshacerDescuento: function () { guardarEstado({ ey_descontado_en: null }, "Descuento deshecho"); },
+  excluir: function (el) {
+    var id = S.modal.id;
+    if (el.getAttribute("data-v") === "1")
+      confirmar("Esta persona sale del Nivel Cero: no aparece al tomar asistencia ni cuenta en los números. Puedes volver a incluirla cuando quieras.", "Sí, sacar", function () {
+        return guardarEstado({ excluido: true }, "Fuera del Nivel Cero", id);
+      });
+    else guardarEstado({ excluido: false }, "Incluido otra vez", id);
+  },
+  nuevoManual: function (el) { abrirModal({ tipo: "manual", id: null, desdeClase: el.getAttribute("data-desde") === "clase" ? S.clase : null }); },
+  editarManual: function (el) { abrirModal({ tipo: "manual", id: el.getAttribute("data-id") }); },
+  guardarManual: guardarManual,
+  borrarManual: function (el) {
+    var p = IDX.ins[el.getAttribute("data-id")];
+    if (!p) return;
+    confirmar("Se borra a " + titulo(p.nombre) + " y se quitan sus asistencias.", "Sí, borrar", function () {
+      return rpc("n0_manual_borrar", { p_token: S.token, p_id: p.id }).then(function () {
+        S.modal = null; renderModal();
+        aviso("Inscrito borrado", "ok");
+        return cargar(true);
+      });
+    });
+  },
+  confirmarSi: function () {
+    var md = S.modal;
+    if (!md || !md.accion || S.ocupado || md.enCurso) return;
+    md.error = null; md.enCurso = true;
+    Promise.resolve().then(md.accion).then(function () {
+      md.enCurso = false;
+      if (S.modal === md) { S.modal = md.volver || null; renderModal(); }
+    }).catch(function (e) {
+      md.enCurso = false; S.ocupado = false;
+      if (S.modal === md) { md.error = bonito(e.message); refrescarModal(); }
+    });
+  },
+  confirmarNo: function () { var md = S.modal; S.modal = md && md.volver ? md.volver : null; renderModal(); }
+};
+
+/* ---------------------------------------------------------- eventos */
+document.addEventListener("click", function (e) {
+  if (e.target.closest && e.target.closest("a[href]")) return;          // los enlaces funcionan como enlaces
+  var el = e.target.closest ? e.target.closest("[data-a]") : null;
+  if (!el) return;
+  var a = el.getAttribute("data-a");
+  if (a === "fondo" && e.target !== el) return;                          // solo el fondo cierra
+  if (el.disabled) return;
+  var f = ACC[a];
+  if (f) { e.preventDefault(); f(el, e); }
+});
+document.addEventListener("keydown", function (e) {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches && e.target.matches('[role="button"][data-a]')) { e.preventDefault(); e.target.click(); }
+  if (e.key === "Escape" && S.modal) cerrarModal();
+});
+document.addEventListener("input", function (e) {
+  var k = e.target.getAttribute && e.target.getAttribute("data-in");
+  if (k === "buscaAsis") {
+    S.buscaAsis = e.target.value;
+    var c = claseDe(S.clase), box = document.getElementById("lista-asis");
+    if (c && box) box.innerHTML = listaAsistencia(c);
+  } else if (k === "buscaIns") {
+    S.buscaIns = e.target.value;
+    var box2 = document.getElementById("lista-ins");
+    if (box2) box2.innerHTML = listaInscritos();
+  }
+});
+document.addEventListener("change", function (e) {
+  var k = e.target.getAttribute && e.target.getAttribute("data-in");
+  if (k === "fuera") {
+    S.fuera = e.target.checked;
+    var c = claseDe(S.clase), box = document.getElementById("lista-asis");
+    if (c && box) box.innerHTML = listaAsistencia(c);
+  }
+  // al cambiar la fecha de una clase nueva se propone la hora de ese día; el campo de fecha no se toca
+  if (e.target.id === "fFecha" && S.modal && S.modal.tipo === "clase") {
+    leerForm();
+    if (!S.modal.horaElegida && S.modal.fecha) {
+      var hh = horarioDe(S.modal.fecha)[0];
+      S.modal.hora = hh ? hh.hora : null;
+      S.modal.otra = false;
+    }
+    actualizarChipsHora();
+  }
+});
+document.addEventListener("submit", function (e) {
+  if (e.target.id === "fLogin") {
+    e.preventDefault();
+    var v = val("clave");
+    if (v && !S.ocupado) entrar(v);
+  }
+});
+var ocultoDesde = 0;
+document.addEventListener("visibilitychange", function () {
+  if (document.hidden) { ocultoDesde = Date.now(); return; }
+  if (S.token && S.d && !S.modal && ocultoDesde && Date.now() - ocultoDesde > 60000) cargar(true);
+});
+
+render();
+if (S.token) cargar();
+})();
+</script>
+</body>
+</html>
