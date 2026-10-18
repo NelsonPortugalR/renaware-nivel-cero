@@ -57,11 +57,13 @@ node pruebas/prueba.js   # Chromium real con un Supabase falso; 70+ aserciones y
 
 ## Despliegue
 
-Cloudflare Pages, directorio raíz, sin comando de build. Al tener la URL:
+En línea en **https://renaware-nivel-cero.pages.dev**. Cloudflare Pages conectado
+a este repo: directorio raíz, sin comando de build; cada push a `main` publica.
+Registrado en `plataforma_modulos` con:
 
 ```sql
 insert into plataforma_modulos (id, nombre, descripcion, url, roles, orden, activo)
 values ('nivel-cero', 'Nivel Cero', 'Asistencia a capacitaciones y botella de acero de los nuevos.',
-        'https://<proyecto>.pages.dev', array['admin','asistente'], 5, true)
+        'https://renaware-nivel-cero.pages.dev', array['admin','asistente'], 5, true)
 on conflict (id) do update set url = excluded.url;
 ```
