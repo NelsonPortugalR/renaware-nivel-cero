@@ -13,6 +13,13 @@ const SB = "https://kiexpdaaoegbtesqmaff.supabase.co/rest/v1/rpc/";
 
 /* ---------------- servidor falso ---------------- */
 function addDays(iso, n) { return new Date(Date.parse(iso + "T00:00:00Z") + n * 864e5).toISOString().slice(0, 10); }
+const ANCLA = "2025-12-25"; // jueves: los períodos van de jueves a miércoles, 14 días
+function pIdx(f) { return Math.floor((Date.parse(f + "T00:00:00Z") - Date.parse(ANCLA + "T00:00:00Z")) / (14 * 864e5)); }
+function pIni(i) { return addDays(ANCLA, i * 14); }
+function pbObj(st, i) {
+  const cierre = addDays(pIni(i), 13), c = st.cargados[cierre];
+  return { desde: pIni(i), cierre, anio: c ? c.anio : +cierre.slice(0, 4), pb: c ? c.pb : ((i % 26) + 26) % 26 + 1, cargado: c ? c.estado : null };
+}
 let uid = 100;
 function nuevoId() { return "00000000-0000-4000-8000-" + String(++uid).padStart(12, "0"); }
 
@@ -36,7 +43,7 @@ function estadoInicial() {
   // clases martes / miércoles / viernes desde el 23 de setiembre
   const clases = [];
   const fechas = [["2026-09-23", "16:00"], ["2026-09-25", "16:30"], ["2026-09-29", "09:30"], ["2026-09-30", "16:00"], ["2026-10-02", "16:30"],
-                  ["2026-10-06", "09:30"], ["2026-10-07", "16:00"], ["2026-10-09", "16:30"], ["2026-10-14", "16:00"], ["2026-10-16", "16:30"], ["2026-10-20", "09:30"]];
+                  ["2026-10-06", "09:30"], ["2026-10-07", "16:00"], ["2026-10-09", "16:30"], ["2026-10-14", "16:00"], ["2026-10-16", "16:30"], ["2026-10-20", "09:30"], ["2026-10-16", "09:30"]];
   fechas.forEach(function (x, i) { clases.push({ id: "k" + i, fecha: x[0], hora: x[1], tema: i === 0 ? "Bienvenida" : null, tipo: "capacitacion", borrada: false }); });
   const asis = [];
   function marca(ins, ks) { ks.forEach(function (k) { asis.push({ clase: "k" + k, ins: ins, presente: true }); }); }
@@ -45,11 +52,18 @@ function estadoInicial() {
   marca("e", [0, 1, 2, 3, 4]);           // logró, botella entregada, ganó Empiece Ya
   marca("f", [1, 2, 3, 4, 5]);           // logró, botella por entregar
   marca("g", [0, 1, 2, 3, 4, 10]);       // logró, ganó Empiece Ya antes de recibir botella
-  const ey = {
-    "1769990": { fecha: "2026-10-14", anio: 2026, pb: 21, codigo: "1769990", premios: "Utensilio de 1.5L + Botella de Acero Inoxidable" },
-    "1769733": { fecha: "2026-10-14", anio: 2026, pb: 21, codigo: "1769733", premios: "Utensilio de 1.5L + Botella de Acero Inoxidable" }
-  };
-  return { cfg, ins, estado, clases, asis, ey, token: "tok-valido", llamadas: [] };
+  const U = "Utensilio 1.5L + Botella Acero Inoxidable";
+  const ganadores = [
+    { codigo: "1769990", nombre: "LANDAZURI MOSQUERA ELENA SEGUNDA", fecha: "2026-09-30", anio: 2026, pb: 20, origen: "pdf", premios: U, niveles: [{ n: 1, anio: 2026, pb: 20 }] },
+    { codigo: "1769733", nombre: "MARON LIMACHI GLORIA MARITZA", fecha: "2026-09-30", anio: 2026, pb: 20, origen: "pdf", premios: U, niveles: [{ n: 1, anio: 2026, pb: 20 }] },
+    { codigo: "1700000", nombre: "PEREZ VILCA ROSA", fecha: "2026-08-19", anio: 2026, pb: 17, origen: "pdf", premios: U + " · Multi Cooker", niveles: [{ n: 1, anio: 2026, pb: 17 }, { n: 2, anio: 2026, pb: 18 }] },
+    { codigo: "1600000", nombre: "MAMANI APAZA JUAN CARLOS", fecha: "2026-06-10", anio: 2026, pb: 12, origen: "pdf", premios: U + " · Multi Cooker · Extractor Nutrex Press · Viaje a Miami",
+      niveles: [{ n: 1, anio: 2026, pb: 12 }, { n: 2, anio: 2026, pb: 14 }, { n: 3, anio: 2026, pb: 16 }, { n: 4, anio: 2026, pb: 18 }] },
+    { codigo: "1500000", nombre: "CONDORI LUZ MARINA", fecha: "2025-11-26", anio: 2025, pb: 24, origen: "historico", premios: null, niveles: [] }
+  ];
+  const cargados = { "2025-11-26": { anio: 2025, pb: 24, estado: "Historico" } };
+  for (let i = 9; i <= 19; i++) cargados[addDays(pIni(i), 13)] = { anio: 2026, pb: i + 1, estado: "Oficial" };
+  return { cfg, ins, estado, clases, asis, ganadores, cargados, token: "tok-valido", llamadas: [] };
 }
 
 function servidor(st) {
@@ -70,7 +84,15 @@ function servidor(st) {
     else if (HOY <= vence) estado = "en_curso";
     else if (!primera || vence < primera) estado = "sin_seguimiento";
     else estado = "vencio";
-    const eyr = codigo && st.ey[codigo] && st.ey[codigo].fecha >= addDays(inicio, -14) ? Object.assign({ por: "codigo" }, st.ey[codigo]) : null;
+    const w = codigo && st.ganadores.find(g => g.codigo === codigo);
+    const eyr = w && w.fecha >= addDays(inicio, -14) ? { fecha: w.fecha, anio: w.anio, pb: w.pb, por: "codigo", codigo: w.codigo, premios: w.premios } : null;
+    // Empiece Ya: período en que ingresó y dos más
+    const i0 = pIdx(inicio), fin = pbObj(st, i0 + 2);
+    let eyEstado;
+    if (eyr) eyEstado = "gano";
+    else if (HOY <= fin.cierre) eyEstado = "en_plazo";
+    else if (!fin.cargado) eyEstado = "esperando";
+    else eyEstado = fin.cargado === "Oficial" || fin.cargado === "Historico" ? "no_gano" : "preliminar";
     return {
       id: p.id, origen: p.origen, nombre: p.nombre, celular: p.celular, dni: p.dni || null, afiliador: p.afiliador,
       fecha_inscripcion: p.fecha_inscripcion, estado_registro: p.estado_registro || null,
@@ -80,17 +102,19 @@ function servidor(st) {
       asistencias: mias.map(c => ({ c: c.id, v: c.fecha >= inicio && c.fecha <= vence })),
       validas: val.length, total: mias.length,
       logro_fecha: val.length >= meta ? val[meta - 1].fecha : null,
-      estado, ey: eyr
+      estado, ey: eyr, pb_ingreso: pbObj(st, i0), ey_fin: fin, ey_estado: eyEstado
     };
   }
   function n(k) { return st.asis.filter(a => a.clase === k.id && a.presente).length; }
   function claseOut(k) { return { id: k.id, fecha: k.fecha, hora: k.hora, tema: k.tema, tipo: k.tipo, n: n(k) }; }
   function datos() {
     const vivas = st.clases.filter(c => !c.borrada);
+    const ult = Object.keys(st.cargados).sort().pop();
     return {
-      hoy: HOY, config: st.cfg,
+      hoy: HOY, pb_hoy: pbObj(st, pIdx(HOY)), config: st.cfg,
       primera_clase: vivas.map(c => c.fecha).sort()[0] || null,
-      ey_hasta: { fecha: "2026-10-14", anio: 2026, pb: 21, estado: "Oficial" },
+      ey_hasta: ult ? Object.assign({ fecha: ult }, st.cargados[ult]) : null,
+      ey_wv08: st.ganadores.slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || a.nombre.localeCompare(b.nombre)),
       clases: vivas.slice().sort((a, b) => (b.fecha + b.hora).localeCompare(a.fecha + a.hora)).map(claseOut),
       inscritos: st.ins.filter(p => !p.borrado).map(fila).sort((a, b) => b.fecha_inscripcion.localeCompare(a.fecha_inscripcion))
     };
@@ -300,12 +324,16 @@ function bien(nombre, cond, extra) {
   await page.screenshot({ path: "/tmp/n0-5-inscritos.png", fullPage: true });
   await page.click('button.chip[data-f="logro"]');
   await espera(150);
+  bien("marca en la lista a quien ganó el Empiece Ya", /Empiece Ya/i.test(await page.locator('.fila.ins[data-id="e"]').innerText()) &&
+    /Empiece Ya/i.test(await page.locator('.fila.ins[data-id="g"]').innerText()) && !/Empiece Ya/i.test(await page.locator('.fila.ins[data-id="f"]').innerText()));
   await page.locator('.fila.ins[data-id="a"] .cuerpo').click();
   await espera(250);
   await page.screenshot({ path: "/tmp/n0-6-ficha.png" });
   const ficha = await page.locator(".modal").innerText();
   bien("ficha con su estado", /Logró el 21 oct/.test(ficha) && /5 de 5/.test(ficha), ficha.slice(0, 300));
-  bien("ficha con su código y Empiece Ya", /1770001/.test(ficha) && /Aún no figura/.test(ficha));
+  bien("ficha con su código", /1770001/.test(ficha));
+  bien("Empiece Ya en plazo hasta su tercer período", /En plazo: puede ganarlo hasta el cierre del PB23 \(miércoles 11 de noviembre\)/.test(ficha), ficha);
+  bien("dice en qué período ingresó", /Ingresó en el PB21 \(1 oct al 14 oct\)\. Tiene hasta el PB23 \(11 nov\)/.test(ficha), ficha);
   await page.click("text=Entregué hoy");
   await espera(400);
   bien("entrega la botella", /Entregada el 21 oct/.test(await page.locator(".modal").innerText()));
@@ -321,6 +349,60 @@ function bien(nombre, cond, extra) {
   await page.click('.x[aria-label="Cerrar"]');
   await espera(150);
   bien("cierra la ficha", (await page.locator(".modal").count()) === 0);
+
+  /* 6b · agregar clases desde la ficha (Bruno, plazo del 15 oct al 14 nov) */
+  await page.click('button.chip[data-f="en_curso"]');
+  await espera(150);
+  await page.locator('.fila.ins[data-id="b"] .cuerpo').click();
+  await espera(250);
+  await page.click(".modal >> text=+ Agregar clase");
+  await espera(150);
+  const chipsB = await page.locator(".caja-edit .chip").allInnerTexts();
+  bien("propone las clases guardadas de su plazo", chipsB.length === 4 && chipsB.some(t => /20 oct/i.test(t)) && !chipsB.some(t => /14 oct/i.test(t)), chipsB.join(" | "));
+  await page.click('.caja-edit .chip[data-c="k10"]');
+  await espera(400);
+  bien("agrega una clase guardada con un toque", /Clase agregada/.test(await toast()) && /1 de 5/.test(await page.locator(".modal").innerText()), await toast());
+  bien("ya no la vuelve a proponer", (await page.locator('.caja-edit .chip[data-c="k10"]').count()) === 0 && (await page.locator(".caja-edit").count()) === 1);
+  await page.fill("#eFechaClase", "2026-10-16");
+  await page.click('button[data-a="sumarFecha"]');
+  await espera(200);
+  bien("si ese día hubo dos clases, pregunta cuál", /Ese día hay 2 clases/i.test(await page.locator(".caja-edit").innerText()));
+  await page.click('.caja-edit .chip[data-c="k11"]');
+  await espera(400);
+  bien("suma la que eligió", /2 de 5/.test(await page.locator(".modal").innerText()) && st.asis.some(a => a.clase === "k11" && a.ins === "b" && a.presente));
+  await page.fill("#eFechaClase", "2026-10-19");
+  await page.fill("#eTemaClase", "Prospección");
+  await page.click('button[data-a="sumarFecha"]');
+  await espera(600);
+  const lunes = st.clases.find(c => c.fecha === "2026-10-19" && !c.borrada);
+  bien("un día sin clase la crea sin hora y con su tema", !!lunes && lunes.hora === "00:00" && lunes.tema === "Prospección", JSON.stringify(lunes));
+  bien("y la suma", /3 de 5/.test(await page.locator(".modal").innerText()) && /sin hora · Prospección/i.test(await page.locator(".modal .clases-p").innerText()),
+    await page.locator(".modal .clases-p").innerText());
+  bien("limpia el tema", (await page.inputValue("#eTemaClase")) === "");
+  await page.fill("#eFechaClase", "2026-10-13");
+  await page.click('button[data-a="sumarFecha"]');
+  await espera(600);
+  const martes = st.clases.find(c => c.fecha === "2026-10-13" && !c.borrada);
+  bien("con la hora habitual de ese día", !!martes && martes.hora === "09:30", JSON.stringify(martes));
+  bien("avisa que fuera de su plazo no suma", /no suma/.test(await toast()) && /y 1 fuera de plazo/.test(await page.locator(".modal").innerText()), await toast());
+  await page.screenshot({ path: "/tmp/n0-7-agregar-clase.png", fullPage: true });
+  await page.fill("#eFechaClase", "2026-10-23");
+  await page.click('button[data-a="sumarFecha"]');
+  await espera(200);
+  bien("no acepta un día que no llega", /todavía no llega/.test(await toast()), await toast());
+  await page.fill("#eFechaClase", "2026-10-20");
+  await page.click('button[data-a="sumarFecha"]');
+  await espera(200);
+  bien("no repite la clase que ya tiene", /Ya tiene marcada/.test(await toast()), await toast());
+  await page.click('.modal .clases-p button[data-c="' + (martes && martes.id) + '"]');
+  await espera(400);
+  bien("quita una clase", /Clase quitada/.test(await toast()) && !/fuera de plazo/.test(await page.locator(".modal").innerText()) &&
+    st.asis.some(a => martes && a.clase === martes.id && a.ins === "b" && !a.presente));
+  await page.click(".caja-edit >> text=Listo");
+  await espera(150);
+  bien("cierra el panel", (await page.locator(".caja-edit").count()) === 0);
+  await page.click('.x[aria-label="Cerrar"]');
+  await espera(150);
 
   /* 7 · botellas */
   await page.click('button.tab[data-tab="botellas"]');
@@ -344,12 +426,90 @@ function bien(nombre, cond, extra) {
   bien("kpis", /Inscritos con seguimiento\s*7/i.test(num) && /Lograron el Nivel Cero\s*4/i.test(num), num.slice(0, 500));
   bien("tasa sobre cerrados", /80% de quienes cerraron su plazo/.test(num), num.slice(0, 600));
   bien("embudo", /Embudo/i.test(num) && /Lograron las 5/.test(num));
-  bien("comparación con Empiece Ya", /Con Nivel Cero/.test(num) || /Todavía no hay a quién medir/.test(num));
+  bien("comparación con quienes cerraron su plazo del Empiece Ya", /Con Nivel Cero\s*100%\s*2 de 2 ganaron/i.test(num) && /Sin Nivel Cero\s*—\s*0 de 0/i.test(num), num.slice(num.indexOf("empuja"), num.indexOf("empuja") + 400));
   bien("tabla por mes", /oct 2026/.test(num) && /set 2026/.test(num) && /ago 2026/.test(num) && /1 sin seguimiento/.test(num));
   bien("horarios y afiliadores", /Asistencia por horario/i.test(num) && /Por quién los afilió/i.test(num));
   bien("explica a los sin seguimiento", /1 inscrito de antes del 23 set/.test(num), num.slice(-300));
   bien("enlaza al portal de Empiece Ya", (await page.locator('a[href="https://empiece-ya.nelson1614.workers.dev"]').count()) === 1);
   await page.screenshot({ path: "/tmp/n0-4-numeros.png", fullPage: true });
+
+  /* 8b · Empiece Ya de WV08 */
+  await page.click('button.tab[data-tab="ey"]');
+  await espera(200);
+  let eyt = await page.locator("main").innerText();
+  bien("pestaña Empiece Ya de WV08", /Ganadores del Empiece Ya de tu equipo WV08, cargados hasta el PB20 \(30 set\)/.test(eyt), eyt.slice(0, 200));
+  const anios = await page.locator("main .chips").first().innerText();
+  bien("años con su cuenta", /2026\s*4/.test(anios) && /2025\s*1/.test(anios) && /Todos\s*5/i.test(anios), anios.replace(/\n/g, " "));
+  const tiles = await page.locator(".niveles").innerText();
+  bien("ganadores por nivel", /4\s*Ganadores/i.test(tiles) && /4\s*Nivel I\b/i.test(tiles) && /2\s*Nivel II\b/i.test(tiles) && /1\s*Nivel III/i.test(tiles) && /1\s*Miami/i.test(tiles), tiles.replace(/\n/g, " "));
+  let cruce = await page.locator(".cruce").first().innerText();
+  bien("cruce con el Nivel Cero", /2\s*hicieron el Nivel Cero/.test(cruce) && /0\s*ganaron sin completar las 5 clases/.test(cruce) && /2\s*de antes o fuera del registro/.test(cruce), cruce.replace(/\n/g, " "));
+  const filasEY = await page.locator(".fila.gan").allInnerTexts();
+  bien("lista los ganadores del año", filasEY.length === 4, filasEY.length);
+  const fElena = filasEY.find(t => /Elena/.test(t)) || "", fGloria = filasEY.find(t => /Gloria/.test(t)) || "", fJuan = filasEY.find(t => /Juan Carlos/.test(t)) || "";
+  bien("marca a quien hizo el Nivel Cero y su botella", /Nivel Cero/i.test(fElena) && /Hizo el Nivel Cero · botella entregada/.test(fElena) && /su botella va con el Empiece Ya/.test(fGloria), fElena + " / " + fGloria);
+  bien("niveles con el período en que llegó", /Nivel I \(PB12\) · II \(PB14\) · III \(PB16\) · Miami \(PB18\)/.test(fJuan) && /No está en el registro de afiliaciones/.test(fJuan), fJuan);
+  bien("agrupa por período", /PB20 · 30 set/i.test(eyt) && /PB12 · 10 jun/i.test(eyt));
+  await page.screenshot({ path: "/tmp/n0-8-empiece-ya.png", fullPage: true });
+  await page.click('.tnv[data-n="2"]');
+  await espera(150);
+  bien("filtra por nivel", (await page.locator(".fila.gan").count()) === 2 && /Nivel II/i.test(await page.locator("section.card").first().innerText()));
+  await page.click('.tnv[data-n="2"]');
+  await espera(150);
+  bien("vuelve a todos", (await page.locator(".fila.gan").count()) === 4);
+  await page.click('.cz[data-g="con"]');
+  await espera(150);
+  bien("toca el cruce y filtra", (await page.locator(".fila.gan").count()) === 2 && (await page.locator(".cz.on").count()) === 1);
+  await page.locator('.fila.gan[data-id="e"]').click();
+  await espera(250);
+  bien("abre la ficha desde el ganador", /Ganó en el PB20 \(30 set\) · Nivel I/.test(await page.locator(".modal").innerText()), await page.locator(".modal").innerText());
+  await page.click('.x[aria-label="Cerrar"]');
+  await espera(100);
+  await page.click('.cz[data-g="con"]');
+  await espera(150);
+  await page.click('main .chip[data-y="2025"]');
+  await espera(150);
+  eyt = await page.locator("main").innerText();
+  bien("año anterior sin detalle del premio", (await page.locator(".fila.gan").count()) === 1 && /Nivel sin detalle/.test(eyt) && /1 ganador no tiene el detalle del premio \(se carga desde el PB10 de 2026\)/.test(eyt) && /PB24 de 2025/i.test(eyt), eyt.slice(0, 700));
+  let plazo = await page.locator("section.bloque").last().innerText();
+  bien("tus inscritos y su Empiece Ya", /2\s*ganaron/.test(plazo) && /4\s*en plazo/.test(plazo) && /1\s*esperando resultados/.test(plazo) && /1\s*no ganaron/.test(plazo), plazo.replace(/\n/g, " "));
+  bien("dice qué resultados faltan", /Faltan los resultados oficiales del PB21/.test(plazo), plazo);
+
+  /* 8c · ficha según su período */
+  await page.click('button.tab[data-tab="inscritos"]');
+  await page.click('button.chip[data-f="todos"]');
+  await espera(150);
+  await page.locator('.fila.ins[data-id="c"] .cuerpo').click();
+  await espera(200);
+  let fc = await page.locator(".modal").innerText();
+  bien("plazo cerrado, esperando resultados", /Su plazo cerró\. Falta cargar los resultados del PB21/.test(fc) && /Ingresó en el PB19 \(3 set al 16 set\)\. Tiene hasta el PB21 \(14 oct\)/.test(fc), fc);
+  await page.click('.x[aria-label="Cerrar"]');
+  await page.locator('.fila.ins[data-id="d"] .cuerpo').click();
+  await espera(200);
+  fc = await page.locator(".modal").innerText();
+  bien("no ganó si no aparece en sus tres períodos", /No ganó\. No aparece entre los ganadores hasta el PB18, su último período/.test(fc), fc);
+  await page.click('.x[aria-label="Cerrar"]');
+
+  /* 8d · llega el PB21: Carmen ganó sin completar sus 5 clases */
+  st.cargados["2026-10-14"] = { anio: 2026, pb: 21, estado: "Oficial" };
+  st.ganadores.push({ codigo: "1769950", nombre: "TTITO CCAMA CARMEN ROSA", fecha: "2026-10-14", anio: 2026, pb: 21, origen: "pdf",
+    premios: "Utensilio 1.5L + Botella Acero Inoxidable · Multi Cooker", niveles: [{ n: 1, anio: 2026, pb: 21 }, { n: 2, anio: 2026, pb: 21 }] });
+  await page.click('button[data-a="recargar"]');
+  await espera(500);
+  await page.click('button.tab[data-tab="ey"]');
+  await page.click('main .chip[data-y="2026"]');
+  await espera(150);
+  eyt = await page.locator("main").innerText();
+  cruce = await page.locator(".cruce").first().innerText();
+  bien("al cargar el PB21 se actualiza solo", /cargados hasta el PB21/.test(eyt) && /1\s*ganaron sin completar las 5 clases/.test(cruce) && !/Faltan los resultados/.test(eyt), cruce.replace(/\n/g, " "));
+  bien("muestra a quien ganó sin completar el Nivel Cero", /No completó el Nivel Cero · 2 de 5 clases/.test(eyt));
+  plazo = await page.locator("section.bloque").last().innerText();
+  bien("cuenta los resultados nuevos", /3\s*ganaron/.test(plazo) && /0\s*esperando resultados/.test(plazo), plazo.replace(/\n/g, " "));
+  await page.click('.cz[data-g="sin"]');
+  await espera(150);
+  bien("filtra a quienes ganaron sin las 5 clases", (await page.locator(".fila.gan").count()) === 1 && /Carmen Rosa/i.test(await page.locator(".fila.gan").innerText()));
+  await page.click('.cz[data-g="sin"]');
+  await page.screenshot({ path: "/tmp/n0-9-empiece-ya-pb21.png", fullPage: true });
 
   /* 9 · editar y borrar una clase */
   await page.click('button.tab[data-tab="asistencia"]');
@@ -392,7 +552,9 @@ function bien(nombre, cond, extra) {
   /* 11 · ancho en celular chico */
   for (const w of [390, 360]) {
     await page.setViewportSize({ width: w, height: 800 });
-    for (const t of ["asistencia", "inscritos", "botellas", "numeros"]) {
+    const caben = await page.evaluate(() => { const n = document.querySelector("nav.tabs"); return [n.scrollWidth, n.clientWidth]; });
+    bien("caben las 5 pestañas a " + w + "px", caben[0] <= caben[1], caben.join(" / "));
+    for (const t of ["asistencia", "inscritos", "botellas", "ey", "numeros"]) {
       await page.click('button.tab[data-tab="' + t + '"]');
       await espera(120);
       const ancho = await page.evaluate(() => document.documentElement.scrollWidth);

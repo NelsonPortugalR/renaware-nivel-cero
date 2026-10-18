@@ -13,9 +13,17 @@ Empiece Ya. Si después gana el Empiece Ya, ese premio se entrega sin botella.
   fecha para cargar asistencias en papel.
 - **Inscritos**: en curso, lograron, vencieron. Cada uno con sus clases, plazo,
   código Rena Ware, Empiece Ya, botella y un WhatsApp con el mensaje que toca
-  (cuánto le falta y hasta cuándo, o que recoja su botella).
+  (cuánto le falta y hasta cuándo, o que recoja su botella). En la ficha se
+  agregan clases: una guardada de su plazo con un toque, u otro día con solo la
+  fecha (si ese día no hay clase, se crea con la hora habitual o sin hora, y
+  tema opcional). Cada clase se puede quitar.
 - **Botellas**: por entregar, entregadas, a descontar en el Empiece Ya, y las
   que vienen dentro del Empiece Ya porque lo ganó antes de recibirla.
+- **Empiece Ya**: ganadores de WV08 por año y por nivel (I, II, III, Miami),
+  agrupados por período, cruzados con el Nivel Cero: quién lo hizo (y su
+  botella), quién ganó sin completar las 5 clases y quién es de antes o no
+  está en el registro. Abajo, tus inscritos: ganaron, en plazo, esperando
+  resultados, no ganaron.
 - **Números**: inscritos, cuántos van, cuántos logran (sobre quienes ya
   cerraron su plazo), embudo hasta el Empiece Ya, comparación de Empiece Ya
   con y sin Nivel Cero, por mes, por horario y por afiliador.
@@ -33,6 +41,13 @@ Empiece Ya. Si después gana el Empiece Ya, ese premio se entrega sin botella.
 - Empiece Ya: se cruza por código Rena Ware con `eya_asesores`; sin código,
   por nombre dentro de WV08 y solo si hay una coincidencia única. Se ignora un
   Empiece Ya de más de 14 días antes de la inscripción.
+- Plazo del Empiece Ya: el período (PB, de jueves a miércoles) en que se
+  inscribió y dos más. Si no aparece entre los ganadores hasta el cierre del
+  tercero, no ganó; mientras ese resultado no esté cargado como oficial, queda
+  *esperando resultados*.
+- Niveles leídos de los premios (`eya_premios.items`): I = utensilio 1.5L +
+  botella, II = Multi Cooker (antes cocina de inducción), III = Nutrex Press
+  (antes Juego Chef I), Miami = viaje. El detalle existe desde el PB10 de 2026.
 
 ## Cómo está hecho
 
@@ -52,7 +67,7 @@ la sesión de admin (`admin_login`, la misma clave del panel).
 ## Pruebas
 
 ```bash
-node pruebas/prueba.js   # Chromium real con un Supabase falso; 70+ aserciones y capturas en /tmp/n0-*.png
+node pruebas/prueba.js   # Chromium real con un Supabase falso; 100+ aserciones y capturas en /tmp/n0-*.png
 ```
 
 ## Despliegue

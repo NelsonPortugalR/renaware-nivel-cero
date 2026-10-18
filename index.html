@@ -52,12 +52,14 @@ input,select,textarea{font-family:inherit}
 .icono{background:none;border:1px solid #3A4658;color:#fff;width:36px;height:36px;font-size:18px;line-height:1}
 .tabs{display:flex;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab{flex:1 0 auto;background:none;border:0;border-bottom:3px solid transparent;color:#A9B2BE;
-  padding:11px 8px 10px;font:11px/1 var(--mono);text-transform:uppercase;letter-spacing:.09em;white-space:nowrap}
+.tab{flex:1 1 auto;min-width:0;background:none;border:0;border-bottom:3px solid transparent;color:#A9B2BE;
+  padding:11px 4px 7px;font:10px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;min-height:52px}
+@media (max-width:480px){nav.tabs{padding-left:2px;padding-right:2px}}
 .tab.on{color:#fff;border-bottom-color:#fff}
 .cuenta{display:inline-block;min-width:18px;padding:1px 5px;background:var(--ink40);color:#fff;
   font:10px/14px var(--mono);border-radius:9px;text-align:center;letter-spacing:0;vertical-align:1px}
-.tab .cuenta{background:#33415A}
+.tab .cuenta{background:#33415A;font-size:9.5px;line-height:13px;min-width:16px;vertical-align:0}
 .tab.on .cuenta{background:var(--ambar)}
 main.wrap{padding-top:16px}
 
@@ -86,6 +88,31 @@ input[type=date].in,input[type=time].in{min-height:46px}
 .sec-t.chico{margin-top:18px}
 .tag{display:inline-block;font:9.5px/15px var(--mono);text-transform:uppercase;letter-spacing:.08em;padding:0 5px;background:var(--aceroS);color:var(--acero);vertical-align:2px;font-weight:400}
 .tag.gris{background:var(--soft);color:var(--ink40)}
+.tag.ok{background:var(--verdeS);color:var(--verde)}
+.nv{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 4px;font:700 10px/1 var(--mono);border:1.5px solid var(--acero);color:var(--acero);background:#fff}
+.der.nvs{gap:4px;flex-wrap:wrap;justify-content:flex-end;max-width:78px}
+.nv2{background:var(--aceroS)}
+.nv3{background:var(--acero);color:#fff}
+.nv4{border-color:var(--ambar);color:var(--ambar)}
+.niveles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:12px 0}
+.tnv{background:#fff;border:1px solid var(--rule);padding:10px 2px;display:flex;flex-direction:column;align-items:center;gap:4px;min-height:64px}
+.tnv b{font:700 21px/1 var(--mono)}
+.tnv span{font:9px/1.2 var(--mono);text-transform:uppercase;letter-spacing:.05em;color:var(--ink40);text-align:center}
+.tnv.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.tnv.on span{color:#C9D1DB}
+.cruce{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.cruce.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cruce>div,.cz{display:flex;flex-direction:column;gap:3px}
+.cz{background:none;border:1px solid transparent;padding:6px;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.cz.on{border-color:var(--ink);background:var(--soft)}
+.cruce b{font:700 22px/1 var(--mono)}
+.cruce span{font:11px/1.3 var(--mono);color:var(--ink40)}
+.cruce .ok b{color:var(--verde)}
+.cruce .mal b{color:var(--ambar)}
+.clases-p li{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.clases-p li>span{min-width:0}
+.clases-p li>button{flex:0 0 auto;white-space:nowrap}
+.caja-edit{border:1px solid var(--rule);background:var(--soft);padding:10px;margin-top:10px}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:1px solid var(--rule);background:#fff;padding:9px 12px;font:11px/1 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink70);min-height:38px}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -218,7 +245,7 @@ function lsSet(k, v) { try { if (v == null) window.localStorage.removeItem(k); e
 var S = {
   token: lsGet(LS_TOKEN), d: null, errorCarga: null, loginError: null, ocupado: false,
   tab: "asistencia", clase: null, buscaAsis: "", fuera: false, masClases: false,
-  filtro: "en_curso", buscaIns: "", modal: null
+  filtro: "en_curso", buscaIns: "", eyAnio: null, eyNivel: 0, eyCruce: null, modal: null
 };
 var IDX = { ins: {}, presentes: {} };   // presentes[claseId][inscritoId] = true
 var enVuelo = {};
@@ -251,6 +278,7 @@ function mayus(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 function hora12(h) {
   if (!h) return "";
   var p = String(h).split(":"), hh = +p[0], mm = p[1] || "00";
+  if (hh === 0 && mm === "00") return "sin hora";
   return (hh % 12 || 12) + ":" + mm + " " + (hh < 12 ? "a. m." : "p. m.");
 }
 function plural(n, s, p) { return n + " " + (n === 1 ? s : p); }
@@ -299,6 +327,13 @@ function indexar() {
       IDX.presentes[a.c][p.id] = true;
     });
   });
+  indexarEY();
+}
+/* ganadores WV08 por código, y a qué inscrito corresponde cada ganador */
+function indexarEY() {
+  IDX.eyCod = {}; IDX.insPorCod = {};
+  (S.d.ey_wv08 || []).forEach(function (w) { IDX.eyCod[w.codigo] = w; });
+  S.d.inscritos.forEach(function (p) { if (p.ey && p.ey.codigo) IDX.insPorCod[p.ey.codigo] = p.id; });
 }
 function parchar(p) {
   if (!p || !p.id || !S.d) return;
@@ -310,6 +345,7 @@ function parchar(p) {
     if (!IDX.presentes[a.c]) IDX.presentes[a.c] = {};
     IDX.presentes[a.c][p.id] = true;
   });
+  indexarEY();
 }
 function ponerClase(k) {
   var i = S.d.clases.findIndex(function (x) { return x.id === k.id; });
@@ -377,6 +413,52 @@ function etiquetaEY(ey) {
   if (!ey) return "";
   if (!ey.pb) return "el cierre del " + fCorta(ey.fecha);
   return "PB" + ey.pb + (ey.anio && ey.anio !== partes(hoy()).y ? " de " + ey.anio : "") + " (" + fCorta(ey.fecha) + ")";
+}
+function etPB(x) {
+  if (!x) return "";
+  return "PB" + x.pb + (x.anio && x.anio !== partes(hoy()).y ? " de " + x.anio : "");
+}
+var ROMANO = ["", "I", "II", "III"];
+function textoNiveles(w, conPB) {
+  var t = (w && w.niveles || []).map(function (x) {
+    return (x.n === 4 ? "Miami" : ROMANO[x.n]) + (conPB && x.pb ? " (" + etPB(x) + ")" : "");
+  }).join(" · ");
+  return t && (w.niveles[0].n === 4 ? t : "Nivel " + t);
+}
+function nivelesBadges(w) {
+  var l = (w && w.niveles || []).map(function (x) { return x.n; });
+  if (!l.length) return "";
+  return '<span class="der nvs">' + l.map(function (n) {
+    return '<span class="nv nv' + n + '" title="' + (n === 4 ? "Viaje a Miami" : "Nivel " + ROMANO[n]) + '">' + (n === 4 ? "MIA" : ROMANO[n]) + "</span>";
+  }).join("") + "</span>";
+}
+function eyDe(codigo) { return codigo ? IDX.eyCod[codigo] : null; }
+function lineaEY(p) {
+  var fin = p.ey_fin, st = p.ey_estado;
+  if (st === "gano") {
+    var w = eyDe(p.ey.codigo), nv = textoNiveles(w);
+    return "<b>Ganó</b> en el " + esc(etiquetaEY(p.ey)) + (nv ? " · " + esc(nv) : "") +
+      (p.ey.por === "nombre" ? ' <span class="tag">por nombre</span>' : "") +
+      (p.ey.premios ? '<div class="hint">' + esc(p.ey.premios) + "</div>" : "");
+  }
+  if (!fin) return '<span class="hint">Sin datos del período</span>';
+  if (st === "en_plazo") return "En plazo: puede ganarlo hasta el cierre del " + esc(etPB(fin)) + " (" + esc(fLarga(fin.cierre)) + ").";
+  if (st === "esperando") return "Su plazo cerró. Falta cargar los resultados del " + esc(etPB(fin)) + " para saber si ganó.";
+  if (st === "preliminar") return "Con el resultado preliminar del " + esc(etPB(fin)) + " no ganó; falta el oficial.";
+  if (st === "no_gano") return "<b>No ganó.</b> No aparece entre los ganadores hasta el " + esc(etPB(fin)) + ", su último período.";
+  return "";
+}
+function cruceN0(w) {
+  var id = IDX.insPorCod[w.codigo], p = id ? IDX.ins[id] : null;
+  if (!p) return { grupo: "fuera", txt: "No está en el registro de afiliaciones", cls: "" };
+  if (p.estado === "logro") {
+    var d = descuento(p);
+    return { grupo: "con", cls: "ok", p: p, txt: "Hizo el Nivel Cero · " + (p.botella_entregada_en ? (d === "pendiente" ? "descontar la botella" : "botella entregada") : "su botella va con el Empiece Ya") };
+  }
+  if (p.estado === "en_curso") return { grupo: "sin", cls: "mal", p: p, txt: "Nivel Cero en curso · " + p.validas + " de " + meta() + " clases" };
+  if (p.estado === "vencio") return { grupo: "sin", cls: "mal", p: p, txt: "No completó el Nivel Cero · " + p.validas + " de " + meta() + " clases" };
+  if (p.estado === "excluido") return { grupo: "fuera", cls: "", p: p, txt: "Fuera del Nivel Cero" };
+  return { grupo: "fuera", cls: "", p: p, txt: "Se inscribió antes del seguimiento del Nivel Cero" };
 }
 function lineaEstado(p) {
   var m = meta();
@@ -466,7 +548,7 @@ function vistaCabecera() {
     if (p.estado === "en_curso") enCurso++;
     if (estadoBotella(p) === "por_entregar" || descuento(p) === "pendiente") botellas++;
   });
-  var tabs = [["asistencia", "Asistencia", 0], ["inscritos", "Inscritos", enCurso], ["botellas", "Botellas", botellas], ["numeros", "Números", 0]];
+  var tabs = [["asistencia", "Asistencia", 0], ["inscritos", "Inscritos", enCurso], ["botellas", "Botellas", botellas], ["ey", "Empiece Ya", 0], ["numeros", "Números", 0]];
   return '<header class="top"><div class="wrap fila-top">' +
       '<div class="marca"><div class="cero"></div><div><div class="caps tiny">Empiece Ya · Equipo Arequipa</div><div class="h1">Nivel Cero</div></div></div>' +
       '<div class="acciones-top"><button class="icono" data-a="recargar" title="Actualizar" aria-label="Actualizar">↻</button>' +
@@ -483,6 +565,7 @@ function vistaTab() {
   if (S.tab === "asistencia") return S.clase ? vistaClase() : vistaClases();
   if (S.tab === "inscritos") return vistaInscritos();
   if (S.tab === "botellas") return vistaBotellas();
+  if (S.tab === "ey") return vistaEY();
   return vistaNumeros();
 }
 
@@ -513,7 +596,7 @@ function vistaClases() {
 }
 function filaClase(c, deHoy) {
   return '<button class="fila clase" data-a="abrirClase" data-id="' + c.id + '">' +
-    '<span class="cuerpo"><span class="nom">' + esc(deHoy ? "Clase de las " + hora12(c.hora) : fDia(c.fecha) + " · " + hora12(c.hora)) +
+    '<span class="cuerpo"><span class="nom">' + esc(deHoy ? (c.hora === "00:00" ? "Clase sin hora" : "Clase de las " + hora12(c.hora)) : fDia(c.fecha) + " · " + hora12(c.hora)) +
       (c.tipo === "evento" ? ' <span class="tag">evento</span>' : "") + "</span>" +
       (c.tema ? '<span class="sub">' + esc(c.tema) + "</span>" : "") + "</span>" +
     '<span class="num">' + c.n + "<small>" + (c.n === 1 ? "asistente" : "asistentes") + "</small></span></button>";
@@ -596,7 +679,8 @@ function listaInscritos() {
 function filaInscrito(p) {
   var e = lineaEstado(p);
   return '<div class="fila ins" role="button" tabindex="0" data-a="persona" data-id="' + p.id + '">' +
-    '<span class="cuerpo"><span class="nom">' + esc(titulo(p.nombre)) + (p.origen === "manual" ? ' <span class="tag">a mano</span>' : "") + "</span>" +
+    '<span class="cuerpo"><span class="nom">' + esc(titulo(p.nombre)) + (p.origen === "manual" ? ' <span class="tag">a mano</span>' : "") +
+      (p.ey_estado === "gano" ? ' <span class="tag ok">Empiece Ya</span>' : "") + "</span>" +
       '<span class="sub ' + e.cls + '">' + esc(e.txt) + "</span></span>" +
     '<span class="der">' + puntos(Math.min(p.validas, meta())) + botonWA(p) + "</span></div>";
 }
@@ -696,8 +780,8 @@ function kpi(t, v, s) {
 function bloqueComparacion(seg, eyH) {
   var h = '<section class="card pad bloque"><h2 class="sec-t" style="margin-top:0">¿El Nivel Cero empuja el Empiece Ya?</h2>';
   if (!eyH) return h + '<p class="hint">Aún no hay resultados del Empiece Ya cargados.</p></section>';
-  var ev = seg.filter(function (p) { return (p.estado === "logro" || p.estado === "vencio") && diasEntre(p.fecha_inscripcion, eyH.fecha) >= 42; });
-  var nota = "Cuenta solo a quienes se inscribieron al menos 6 semanas antes del último Empiece Ya cargado (PB" + eyH.pb + ", " + fCorta(eyH.fecha) + "), para que hayan tenido su tiempo completo.";
+  var ev = seg.filter(function (p) { return (p.estado === "logro" || p.estado === "vencio") && (p.ey_estado === "gano" || p.ey_estado === "no_gano"); });
+  var nota = "Cuenta solo a quienes ya cerraron su plazo del Empiece Ya (su período de ingreso y dos más) y tienen esos resultados oficiales cargados, hoy hasta el PB" + eyH.pb + ".";
   if (!ev.length) return h + '<p class="hint">Todavía no hay a quién medir. ' + esc(nota) + "</p></section>";
   var con = ev.filter(function (p) { return p.estado === "logro"; }), sin = ev.filter(function (p) { return p.estado !== "logro"; });
   var a = con.filter(ganoEY).length, b = sin.filter(ganoEY).length;
@@ -753,6 +837,75 @@ function bloqueAfiliadores(seg) {
   return '<section class="card pad bloque"><h2 class="sec-t" style="margin-top:0">Por quién los afilió</h2><table class="t"><thead><tr><th>Afiliador</th><th>Inscritos</th><th>Fueron</th><th>Lograron</th></tr></thead><tbody>' +
     l.map(function (x) { return "<tr><td>" + esc(x[0]) + "</td><td>" + x[1].n + "</td><td>" + x[1].fue + "</td><td><b>" + x[1].logro + "</b></td></tr>"; }).join("") +
     "</tbody></table></section>";
+}
+
+/* ----- Empiece Ya de WV08 */
+function vistaEY() {
+  var lista = S.d.ey_wv08 || [], anios = {};
+  lista.forEach(function (w) { var y = String(w.fecha).slice(0, 4); anios[y] = (anios[y] || 0) + 1; });
+  var ys = Object.keys(anios).sort().reverse();
+  if (!S.eyAnio || (S.eyAnio !== "todos" && !anios[S.eyAnio])) S.eyAnio = ys[0] || "todos";
+  var sel = lista.filter(function (w) { return S.eyAnio === "todos" || String(w.fecha).slice(0, 4) === S.eyAnio; });
+  var cn = { 1: 0, 2: 0, 3: 0, 4: 0 }, sinDetalle = 0;
+  sel.forEach(function (w) {
+    var l = (w.niveles || []).map(function (x) { return x.n; });
+    if (!l.length) sinDetalle++;
+    l.forEach(function (n) { cn[n]++; });
+  });
+  var vis = S.eyNivel ? sel.filter(function (w) { return (w.niveles || []).some(function (x) { return x.n === S.eyNivel; }); }) : sel;
+  var eyH = S.d.ey_hasta;
+  var html = '<p class="regla">Ganadores del Empiece Ya de tu equipo WV08' + (eyH ? ", cargados hasta el PB" + eyH.pb + " (" + esc(fCorta(eyH.fecha)) + ")" + (eyH.estado === "Preliminar" ? " preliminar" : "") : "") + ".</p>";
+  html += '<div class="chips">' + ys.map(function (y) {
+    return '<button class="chip' + (S.eyAnio === y ? " on" : "") + '" data-a="eyAnio" data-y="' + y + '">' + y + "<span>" + anios[y] + "</span></button>";
+  }).join("") + '<button class="chip' + (S.eyAnio === "todos" ? " on" : "") + '" data-a="eyAnio" data-y="todos">Todos<span>' + lista.length + "</span></button></div>";
+  html += '<div class="niveles">' + tileNivel(0, "Ganadores", sel.length) + tileNivel(1, "Nivel I", cn[1]) + tileNivel(2, "Nivel II", cn[2]) +
+    tileNivel(3, "Nivel III", cn[3]) + tileNivel(4, "Miami", cn[4]) + "</div>";
+  if (sinDetalle) html += '<p class="hint">' + plural(sinDetalle, "ganador no tiene", "ganadores no tienen") + " el detalle del premio (se carga desde el PB10 de 2026), así que su nivel no se conoce.</p>";
+  var c = { con: 0, sin: 0, fuera: 0 };
+  vis.forEach(function (w) { c[cruceN0(w).grupo]++; });
+  if (S.eyCruce) vis = vis.filter(function (w) { return cruceN0(w).grupo === S.eyCruce; });
+  html += '<section class="card pad"><span class="lbl">Contra el Nivel Cero' + (S.eyNivel ? " · " + (S.eyNivel === 4 ? "Miami" : "Nivel " + ROMANO[S.eyNivel]) : "") + "</span>" +
+    '<div class="cruce">' + celdaCruce("con", "ok", c.con, "hicieron el Nivel Cero") + celdaCruce("sin", "mal", c.sin, "ganaron sin completar las " + meta() + " clases") +
+    celdaCruce("fuera", "", c.fuera, "de antes o fuera del registro") + '</div><p class="hint" style="margin:10px 0 0">Toca un número para ver solo esos.</p></section>';
+  var grupos = {}, orden = [];
+  vis.forEach(function (w) { if (!grupos[w.fecha]) { grupos[w.fecha] = []; orden.push(w.fecha); } grupos[w.fecha].push(w); });
+  orden.sort().reverse();
+  if (!vis.length) html += '<p class="hint mt">No hay ganadores con ese filtro.</p>';
+  orden.forEach(function (k) {
+    var g = grupos[k], w0 = g[0];
+    html += '<h2 class="sec-t">' + esc((w0.pb ? etPB({ pb: w0.pb, anio: w0.anio }) + " · " : "") + fCorta(k)) + ' <span class="cuenta">' + g.length + "</span></h2>" + g.map(filaGanador).join("");
+  });
+  html += bloquePlazoEY();
+  return html;
+}
+function celdaCruce(g, cls, n, t) {
+  return '<button class="cz ' + cls + (S.eyCruce === g ? " on" : "") + '" data-a="eyCruce" data-g="' + g + '"><b>' + n + "</b><span>" + t + "</span></button>";
+}
+function tileNivel(n, t, v) {
+  return '<button class="tnv' + (S.eyNivel === n ? " on" : "") + '" data-a="eyNivel" data-n="' + n + '"><b>' + v + "</b><span>" + t + "</span></button>";
+}
+function filaGanador(w) {
+  var x = cruceN0(w);
+  var abre = x.p ? ' role="button" tabindex="0" data-a="persona" data-id="' + x.p.id + '"' : "";
+  return '<div class="fila gan"' + abre + '><span class="cuerpo"><span class="nom">' + esc(titulo(w.nombre)) + (x.grupo === "con" ? ' <span class="tag ok">Nivel Cero</span>' : "") + "</span>" +
+    '<span class="sub">' + esc((textoNiveles(w, true) || "Nivel sin detalle") + " · cód. " + w.codigo) + "</span>" +
+    '<span class="sub ' + x.cls + '">' + esc(x.txt) + "</span></span>" + nivelesBadges(w) + "</div>";
+}
+function bloquePlazoEY() {
+  var c = { gano: 0, en_plazo: 0, esperando: 0, preliminar: 0, no_gano: 0 }, pend = {};
+  S.d.inscritos.forEach(function (p) {
+    if (p.excluido || !c.hasOwnProperty(p.ey_estado)) return;
+    c[p.ey_estado]++;
+    if ((p.ey_estado === "esperando" || p.ey_estado === "preliminar") && p.ey_fin) pend[p.ey_fin.cierre] = p.ey_fin;
+  });
+  var pl = Object.keys(pend).sort().map(function (k) { return pend[k]; });
+  var h = '<section class="card pad bloque"><h2 class="sec-t" style="margin-top:0">Tus inscritos y su Empiece Ya</h2>' +
+    '<p class="hint" style="margin-top:0">Rena Ware da el período en que se inscribió y dos más. Si no aparece entre los ganadores de esos tres, ya no ganó.</p>' +
+    '<div class="cruce c4"><div class="ok"><b>' + c.gano + "</b><span>ganaron</span></div><div><b>" + c.en_plazo + "</b><span>en plazo</span></div>" +
+    "<div><b>" + (c.esperando + c.preliminar) + "</b><span>esperando resultados</span></div><div><b>" + c.no_gano + "</b><span>no ganaron</span></div></div>";
+  if (pl.length) h += '<p class="aviso chico">Faltan los resultados oficiales del ' + esc(pl.length === 1 ? etPB(pl[0]) : etPB(pl[0]) + " al " + etPB(pl[pl.length - 1])) +
+    ". Al cargarlos, esta cuenta se actualiza sola.</p>";
+  return h + "</section>";
 }
 
 /* ---------------------------------------------------------- modales */
@@ -824,7 +977,7 @@ function modalPersona() {
   else h += ' <button class="lk" data-a="editar" data-e="inicio">Corregir inicio</button>';
   h += "</dd>";
   h += "<dt>Clases</dt><dd>" + puntos(Math.min(p.validas, m)) + " <b>" + p.validas + " de " + m + "</b>" +
-    (p.total > p.validas ? ' <span class="hint">y ' + (p.total - p.validas) + " fuera de plazo</span>" : "") + listaClasesPersona(p) + "</dd>";
+    (p.total > p.validas ? ' <span class="hint">y ' + (p.total - p.validas) + " fuera de plazo</span>" : "") + listaClasesPersona(p) + bloqueAgregarClase(p, ed) + "</dd>";
   h += "<dt>Código RW</dt><dd>" + (p.codigo ? esc(p.codigo) + (p.codigo_editado ? ' <span class="tag">a mano</span>' : "") : '<span class="hint">sin código todavía</span>');
   if (ed === "codigo")
     h += '<div class="edit"><input class="in" id="eCodigo" inputmode="numeric" value="' + esc(p.codigo || "") + '" placeholder="Ej. 1769942"><div class="fila-btn">' +
@@ -832,9 +985,9 @@ function modalPersona() {
       '<p class="hint">Con el código se cruza con los ganadores del Empiece Ya.</p></div>';
   else h += ' <button class="lk" data-a="editar" data-e="codigo">' + (p.codigo ? "Cambiar" : "Agregar") + "</button>";
   h += "</dd>";
-  h += "<dt>Empiece Ya</dt><dd>" + (ganoEY(p)
-    ? "Ganó en el " + esc(etiquetaEY(p.ey)) + (p.ey.por === "nombre" ? ' <span class="tag">por nombre</span>' : "") + (p.ey.premios ? '<div class="hint">' + esc(p.ey.premios) + "</div>" : "")
-    : '<span class="hint">Aún no figura entre los ganadores' + (S.d.ey_hasta ? " (cargado hasta el PB" + S.d.ey_hasta.pb + ")" : "") + "</span>") + "</dd>";
+  h += "<dt>Empiece Ya</dt><dd>" + lineaEY(p) +
+    (p.pb_ingreso && p.ey_fin ? '<div class="hint">Ingresó en el ' + esc(etPB(p.pb_ingreso)) + " (" + esc(fCorta(p.pb_ingreso.desde) + " al " + fCorta(p.pb_ingreso.cierre)) +
+      "). Tiene hasta el " + esc(etPB(p.ey_fin)) + " (" + esc(fCorta(p.ey_fin.cierre)) + ").</div>" : "") + "</dd>";
   h += "<dt>Botella</dt><dd>" + bloqueBotella(p, ed) + "</dd>";
   h += "</dl>";
   h += '<label class="lbl" for="eNota">Nota</label><textarea class="in" id="eNota" rows="2" placeholder="Algo que conviene recordar">' + esc(p.nota || "") + "</textarea>" +
@@ -851,8 +1004,32 @@ function listaClasesPersona(p) {
   return '<ul class="clases-p">' + p.asistencias.map(function (a) {
     var c = claseDe(a.c);
     if (!c) return "";
-    return "<li>" + esc(fDia(c.fecha) + " · " + hora12(c.hora)) + (a.v ? "" : ' <span class="tag gris">no suma</span>') + "</li>";
+    return "<li><span>" + esc(fDia(c.fecha) + " · " + hora12(c.hora) + (c.tema ? " · " + c.tema : "")) + (a.v ? "" : ' <span class="tag gris">no suma</span>') + "</span>" +
+      '<button class="lk" data-a="quitarClase" data-c="' + c.id + '" aria-label="Quitar esta clase">quitar</button></li>';
   }).join("") + "</ul>";
+}
+/* Agregar clases desde la ficha: una guardada de su plazo con un toque, u otro día con solo la fecha. */
+function bloqueAgregarClase(p, ed) {
+  if (ed !== "clase") return '<div class="fila-btn"><button class="lk" data-a="editar" data-e="clase">+ Agregar clase</button></div>';
+  var md = S.modal, h0 = hoy(), hechas = {};
+  (p.asistencias || []).forEach(function (a) { hechas[a.c] = 1; });
+  var h = '<div class="caja-edit">';
+  if (md.opciones && md.opciones.length) {
+    h += '<span class="lbl">Ese día hay ' + md.opciones.length + " clases: ¿a cuál fue?</span>" + '<div class="chips">' + md.opciones.map(function (id) {
+      var c = claseDe(id);
+      return c ? '<button type="button" class="chip" data-a="sumarClase" data-c="' + c.id + '">' + esc(hora12(c.hora) + (c.tema ? " · " + c.tema : "")) + "</button>" : "";
+    }).join("") + '</div><div class="fila-btn"><button class="lk" data-a="otraFecha">Elegir otro día</button></div>';
+    return h + "</div>";
+  }
+  var cand = S.d.clases.filter(function (c) { return !hechas[c.id] && c.fecha <= h0 && c.fecha >= p.inicio && c.fecha <= p.vence; }).slice(0, 12);
+  h += '<span class="lbl">Clases guardadas en su plazo</span>';
+  h += cand.length
+    ? '<div class="chips">' + cand.map(function (c) { return '<button type="button" class="chip" data-a="sumarClase" data-c="' + c.id + '">' + esc(fDia(c.fecha) + " · " + hora12(c.hora)) + "</button>"; }).join("") + "</div>"
+    : '<p class="hint" style="margin:0">No hay clases guardadas en su plazo que le falten.</p>';
+  h += '<label class="lbl mt" for="eFechaClase">Otro día</label><input class="in" type="date" id="eFechaClase" max="' + h0 + '" value="' + esc(md.fechaClase || h0) + '">';
+  h += '<input class="in mt" id="eTemaClase" placeholder="Tema (opcional)" value="' + esc(md.temaClase || "") + '" autocomplete="off">';
+  h += '<div class="fila-btn"><button class="btn sm" data-a="sumarFecha">Agregar</button><button class="lk" data-a="editar" data-e="">Listo</button></div>';
+  return h + "</div>";
 }
 function bloqueBotella(p, ed) {
   var b = estadoBotella(p), h = "";
@@ -1108,7 +1285,7 @@ var ACC = {
   persona: function (el) { abrirModal({ tipo: "persona", id: el.getAttribute("data-id") }); },
   cerrarModal: cerrarModal,
   fondo: cerrarModal,
-  editar: function (el) { S.modal.editar = el.getAttribute("data-e") || null; refrescarModal(); },
+  editar: function (el) { S.modal.editar = el.getAttribute("data-e") || null; S.modal.opciones = null; refrescarModal(); },
   guardarInicio: function () { var v = val("eInicio"); if (v) guardarEstado({ fecha_inicio: v }, "Inicio corregido"); },
   restaurarInicio: function () { guardarEstado({ fecha_inicio: null }, "Volvió a la fecha del registro"); },
   guardarCodigo: function () { guardarEstado({ codigo_rw: val("eCodigo") }, "Código guardado"); },
@@ -1152,8 +1329,76 @@ var ACC = {
       if (S.modal === md) { md.error = bonito(e.message); refrescarModal(); }
     });
   },
-  confirmarNo: function () { var md = S.modal; S.modal = md && md.volver ? md.volver : null; renderModal(); }
+  confirmarNo: function () { var md = S.modal; S.modal = md && md.volver ? md.volver : null; renderModal(); },
+  sumarClase: function (el) { agregarAsistencia(el.getAttribute("data-c")); },
+  sumarFecha: function () {
+    var f = val("eFechaClase"), tema = val("eTemaClase").trim();
+    S.modal.fechaClase = f; S.modal.temaClase = tema;
+    if (!f) return aviso("Elige el día", "mal");
+    if (f > hoy()) return aviso("Ese día todavía no llega", "mal");
+    var p = IDX.ins[S.modal.id], ya = {};
+    ((p && p.asistencias) || []).forEach(function (a) { ya[a.c] = 1; });
+    var delDia = S.d.clases.filter(function (c) { return c.fecha === f; });
+    var libres = delDia.filter(function (c) { return !ya[c.id]; });
+    if (delDia.length && !libres.length) return aviso("Ya tiene marcada la clase de ese día", "mal");
+    if (libres.length === 1) return agregarAsistencia(libres[0].id);
+    if (libres.length > 1) { S.modal.opciones = libres.map(function (c) { return c.id; }); return refrescarModal(); }
+    // no hay clase ese día: se crea con la hora habitual si ese día tiene una sola, si no queda sin hora
+    var hs = horarioDe(f), hora = hs.length === 1 ? hs[0].hora : "00:00";
+    if (S.ocupado) return;
+    S.ocupado = true;
+    rpc("n0_clase_guardar", { p_token: S.token, p_id: null, p_fecha: f, p_hora: hora, p_tema: tema || null, p_tipo: "capacitacion" }).then(function (k) {
+      S.ocupado = false; ponerClase(k);
+      return agregarAsistencia(k.id, true);
+    }).catch(function (e) { S.ocupado = false; if (S.token) aviso(bonito(e.message), "mal"); });
+  },
+  otraFecha: function () { S.modal.opciones = null; refrescarModal(); },
+  quitarClase: function (el) { quitarAsistencia(el.getAttribute("data-c")); },
+  eyAnio: function (el) { S.eyAnio = el.getAttribute("data-y"); render(); },
+  eyNivel: function (el) { var n = +el.getAttribute("data-n"); S.eyNivel = S.eyNivel === n ? 0 : n; render(); },
+  eyCruce: function (el) { var g = el.getAttribute("data-g"); S.eyCruce = S.eyCruce === g ? null : g; render(); }
 };
+
+/* Marca la clase en la ficha. Si se escribió un tema y esa clase no tenía, se lo pone. */
+function agregarAsistencia(claseId, recargarTodo) {
+  var md = S.modal, pid = md && md.id;
+  if (!pid || S.ocupado) return Promise.resolve();
+  var fIn = val("eFechaClase"); if (fIn) md.fechaClase = fIn;
+  var tema = (val("eTemaClase") || md.temaClase || "").trim(), c0 = claseDe(claseId);
+  S.ocupado = true;
+  var antes = IDX.ins[pid] ? IDX.ins[pid].validas : 0;
+  var paso = tema && c0 && !c0.tema
+    ? rpc("n0_clase_guardar", { p_token: S.token, p_id: c0.id, p_fecha: c0.fecha, p_hora: c0.hora, p_tema: tema, p_tipo: c0.tipo }).then(function (k) { ponerClase(k); })
+    : Promise.resolve();
+  return paso.then(function () {
+    return rpc("n0_marcar", { p_token: S.token, p_clase: claseId, p_inscrito: pid, p_presente: true });
+  }).then(function (r) {
+    S.ocupado = false;
+    var k = claseDe(r.clase_id); if (k) k.n = r.n;
+    parchar(r.inscrito);
+    if (S.modal && S.modal.id === pid) { S.modal.opciones = null; S.modal.temaClase = ""; refrescarModal(); }
+    render();
+    var p = r.inscrito, c = claseDe(claseId);
+    var a = p && (p.asistencias || []).filter(function (x) { return x.c === claseId; })[0];
+    aviso(p && antes < meta() && p.validas >= meta() ? "¡" + pila(p.nombre) + " completó sus " + meta() + " clases! Ganó su botella."
+      : a && !a.v ? "Clase agregada, pero fue fuera de su plazo: no suma"
+      : "Clase agregada" + (c ? ": " + fDia(c.fecha) : ""), a && !a.v ? "mal" : "ok");
+    if (recargarTodo) cargar(true);
+  }).catch(function (e) { S.ocupado = false; if (S.token) aviso(bonito(e.message), "mal"); });
+}
+function quitarAsistencia(claseId) {
+  var pid = S.modal && S.modal.id;
+  if (!pid || S.ocupado) return;
+  S.ocupado = true;
+  rpc("n0_marcar", { p_token: S.token, p_clase: claseId, p_inscrito: pid, p_presente: false }).then(function (r) {
+    S.ocupado = false;
+    var k = claseDe(r.clase_id); if (k) k.n = r.n;
+    parchar(r.inscrito);
+    if (S.modal && S.modal.id === pid) refrescarModal();
+    render();
+    aviso("Clase quitada", "ok");
+  }).catch(function (e) { S.ocupado = false; if (S.token) aviso(bonito(e.message), "mal"); });
+}
 
 /* ---------------------------------------------------------- eventos */
 document.addEventListener("click", function (e) {
