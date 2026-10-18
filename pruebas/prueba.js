@@ -24,7 +24,7 @@ let uid = 100;
 function nuevoId() { return "00000000-0000-4000-8000-" + String(++uid).padStart(12, "0"); }
 
 function estadoInicial() {
-  const cfg = { clases_meta: 5, dias_plazo: 30, premio: "Botella de acero inoxidable",
+  const cfg = { clases_meta: 5, dias_plazo: 30, premio: "Botella de acero inoxidable", trato: "usted",
     horarios: [{ dia: 2, hora: "09:30" }, { dia: 3, hora: "16:00" }, { dia: 5, hora: "16:30" }] };
   const ins = [
     { id: "a", nombre: "ANA LUCIA QUISPE MAMANI", celular: "959111222", afiliador: "ROSA HILDA ZEBALLOS HUANCA", fecha_inscripcion: "2026-10-01", origen: "registro", estado_registro: "procesado", codigo: "1770001" },
@@ -63,7 +63,7 @@ function estadoInicial() {
   ];
   const cargados = { "2025-11-26": { anio: 2025, pb: 24, estado: "Historico" } };
   for (let i = 9; i <= 19; i++) cargados[addDays(pIni(i), 13)] = { anio: 2026, pb: i + 1, estado: "Oficial" };
-  return { cfg, ins, estado, clases, asis, ganadores, cargados, token: "tok-valido", llamadas: [] };
+  return { cfg, ins, estado, clases, asis, ganadores, cargados, plantillas: [], mensajes: [], token: "tok-valido", llamadas: [] };
 }
 
 function servidor(st) {
@@ -102,7 +102,9 @@ function servidor(st) {
       asistencias: mias.map(c => ({ c: c.id, v: c.fecha >= inicio && c.fecha <= vence })),
       validas: val.length, total: mias.length,
       logro_fecha: val.length >= meta ? val[meta - 1].fecha : null,
-      estado, ey: eyr, pb_ingreso: pbObj(st, i0), ey_fin: fin, ey_estado: eyEstado
+      estado, ey: eyr, pb_ingreso: pbObj(st, i0), ey_fin: fin, ey_estado: eyEstado,
+      trato: e.trato || null,
+      mensajes: st.mensajes.filter(m => m.ins === p.id && !m.anulado).map(m => ({ id: m.id, paso: m.paso, modo: m.modo, en: m.en }))
     };
   }
   function n(k) { return st.asis.filter(a => a.clase === k.id && a.presente).length; }
@@ -111,7 +113,7 @@ function servidor(st) {
     const vivas = st.clases.filter(c => !c.borrada);
     const ult = Object.keys(st.cargados).sort().pop();
     return {
-      hoy: HOY, pb_hoy: pbObj(st, pIdx(HOY)), config: st.cfg,
+      hoy: HOY, pb_hoy: pbObj(st, pIdx(HOY)), config: st.cfg, plantillas: st.plantillas.map(x => Object.assign({}, x)),
       primera_clase: vivas.map(c => c.fecha).sort()[0] || null,
       ey_hasta: ult ? Object.assign({ fecha: ult }, st.cargados[ult]) : null,
       ey_wv08: st.ganadores.slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || a.nombre.localeCompare(b.nombre)),
@@ -190,6 +192,38 @@ function servidor(st) {
         fecha_inscripcion: d.fecha_inscripcion, codigo: (d.codigo_rw || "").replace(/\D/g, "") || null, dni: d.dni || null });
       return fila(p);
     },
+    n0_mensaje_registrar(a) {
+      sesion(a);
+      const p = st.ins.find(x => x.id === a.p_inscrito && !x.borrado);
+      if (!p) falla("La persona no existe");
+      if (!/^[a-z0-9_]{2,30}$/.test(a.p_paso || "")) falla("Paso no valido");
+      if (["whatsapp", "aviso", "omitido"].indexOf(a.p_modo) < 0) falla("Modo no valido");
+      st.mensajes.push({ id: nuevoId(), ins: p.id, paso: a.p_paso, modo: a.p_modo, texto: a.p_texto || null, en: HOY, anulado: false });
+      return fila(p);
+    },
+    n0_mensaje_anular(a) {
+      sesion(a);
+      const m = st.mensajes.find(x => x.id === a.p_id);
+      if (!m) falla("El mensaje no existe");
+      m.anulado = true;
+      return fila(st.ins.find(x => x.id === m.ins));
+    },
+    n0_plantilla_guardar(a) {
+      sesion(a);
+      if (!/^[a-z0-9_]{2,30}$/.test(a.p_clave || "")) falla("Mensaje no valido");
+      const lim = t => (t && String(t).trim()) || null;
+      let x = st.plantillas.find(y => y.clave === a.p_clave);
+      if (!x) { x = { clave: a.p_clave }; st.plantillas.push(x); }
+      Object.assign(x, { tu: lim(a.p_tu), usted: lim(a.p_usted), activo: a.p_activo !== false });
+      return st.plantillas.map(y => Object.assign({}, y));
+    },
+    n0_config_guardar(a) {
+      sesion(a);
+      const t = (a.p_cambios || {}).trato;
+      if (["tu", "usted"].indexOf(t) < 0) falla("El trato es tu o usted");
+      st.cfg.trato = t;
+      return Object.assign({}, st.cfg);
+    },
     n0_manual_borrar(a) {
       sesion(a);
       const p = st.ins.find(x => x.id === a.p_id && x.origen === "manual" && !x.borrado);
@@ -218,8 +252,10 @@ function bien(nombre, cond, extra) {
   const st = estadoInicial();
   const api = servidor(st);
   const nav = await pw.chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
-  const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+  const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, timezoneId: "America/Lima" });
+  await ctx.route("https://wa.me/**", r => r.fulfill({ status: 200, contentType: "text/html", body: "<p>WhatsApp</p>" }));
   const page = await ctx.newPage();
+  await page.clock.setFixedTime(new Date("2026-10-21T10:00:00-05:00"));   // miércoles 10 a. m.: la clase de hoy es a las 4 p. m.
   const errores = [];
   page.on("pageerror", e => errores.push(String(e)));
   // los 400 esperados (clave mala, validaciones) salen como "Failed to load resource": no son errores de la página
@@ -228,6 +264,7 @@ function bien(nombre, cond, extra) {
   await page.route("https://nivel-cero.test/**", r => r.fulfill({ status: 200, contentType: "text/html; charset=utf-8", body: HTML }));
   await page.route(SB + "**", async r => {
     const fn = r.request().url().slice(SB.length);
+    if (fn === "n0_mensaje_registrar" && st.cortar > 0) { st.cortar--; return r.abort("internetdisconnected"); }
     const res = api(fn, JSON.parse(r.request().postData() || "{}"));
     await r.fulfill({ status: res.status, contentType: "application/json", body: JSON.stringify(res.body) });
   });
@@ -314,6 +351,10 @@ function bien(nombre, cond, extra) {
   await espera(200);
   const chips = await page.locator(".chips").first().innerText();
   bien("cuenta por estado", /En curso\s*2/i.test(chips) && /Lograron\s*4/i.test(chips) && /Vencieron\s*1/i.test(chips), chips.replace(/\n/g, " "));
+  bien("abre en Por escribir si hay mensajes", (await page.locator('button.chip.on[data-f="escribir"]').count()) === 1);
+  await page.click('button.chip[data-f="en_curso"]');
+  await espera(150);
+  bien("el WhatsApp de la lista avisa que hay mensaje", (await page.locator('.fila.ins[data-id="b"] a.wa.pend').count()) === 1);
   const wa = await page.locator('.fila.ins[data-id="b"] a.wa').getAttribute("href");
   bien("WhatsApp con mensaje armado", /^https:\/\/wa\.me\/51959333444\?text=/.test(wa) && /qu%C3%A9%20gusto|qué gusto/.test(decodeURIComponent(wa)) === true, wa);
   bien("mensaje con el plazo", /hasta el sábado 14 de noviembre/.test(decodeURIComponent(wa)), decodeURIComponent(wa));
@@ -404,6 +445,167 @@ function bien(nombre, cond, extra) {
   await page.click('.x[aria-label="Cerrar"]');
   await espera(150);
 
+  /* 6c · mensajes de seguimiento */
+  const maria = st.ins.find(x => x.nombre === "María Pérez Soto");
+  await page.click('button.chip[data-f="escribir"]');
+  await espera(150);
+  let cola = await page.locator("main").innerText();
+  bien("cola por escribir con su cuenta", /Por escribir\s*3/i.test(await page.locator(".chips").first().innerText()) && /Inscritos\s*3/i.test(await page.locator("nav.tabs").innerText()),
+    (await page.locator(".chips").first().innerText()).replace(/\n/g, " "));
+  bien("agrupa por paso", /Primera clase\s*1/i.test(cola) && /Le faltan 2\s*1/i.test(cola) && /Ganó la botella\s*1/i.test(cola), cola.slice(0, 700));
+  const prevM = await page.locator('.fila.msj[data-id="' + maria.id + '"] .prev').innerText();
+  bien("de usted, con su fecha límite y la próxima clase",
+    prevM === "¡Felicitaciones por su primera clase, María! 💪 Ya lleva 1 de 5. Le faltan 4 para ganar su botella de acero y tiene hasta el viernes 20 de noviembre. La próxima es hoy a las 4:00 p. m.", prevM);
+  await page.screenshot({ path: "/tmp/n0-10-por-escribir.png", fullPage: true });
+  const [pop] = await Promise.all([page.waitForEvent("popup"), page.click('.fila.msj[data-id="' + maria.id + '"] a[data-envio]')]);
+  const urlWA = decodeURIComponent(pop.url());
+  await pop.close();
+  await espera(700);
+  bien("abre WhatsApp con el mensaje listo", urlWA.indexOf("https://wa.me/51987654321?text=¡Felicitaciones por su primera clase, María!") === 0, urlWA);
+  const reg = st.mensajes.find(m => m.ins === maria.id);
+  bien("queda anotado como enviado", !!reg && reg.paso === "clase1" && reg.modo === "whatsapp" && /María/.test(reg.texto || ""), JSON.stringify(reg));
+  cola = await page.locator("main").innerText();
+  bien("sale de la cola y pasa a mandados hoy", (await page.locator('.fila.msj[data-id="' + maria.id + '"]').count()) === 0 && /Mandados hoy\s*1/i.test(cola) &&
+    /María Pérez Soto · Primera clase · WhatsApp/.test(cola), cola.slice(-300));
+  await page.click('.fila.msj[data-id="a"] button[data-a="omitir"]');
+  await espera(600);
+  bien("omitir lo saca de la cola", (await page.locator('.fila.msj[data-id="a"]').count()) === 0 && st.mensajes.some(m => m.ins === "a" && m.paso === "botella" && m.modo === "omitido"));
+  await page.locator(".hist li", { hasText: "Ana Lucia" }).locator("button").click();
+  await espera(500);
+  bien("deshacer lo devuelve a la cola", (await page.locator('.fila.msj[data-id="a"]').count()) === 1 && st.mensajes.some(m => m.ins === "a" && m.anulado));
+  st.cortar = 2;
+  await page.click('.fila.msj[data-id="a"] button[data-a="omitir"]');
+  await espera(600);
+  bien("sin señal queda guardado en el celular", /Sin conexión/.test(await toast()) && (await page.locator('.fila.msj[data-id="a"]').count()) === 0 &&
+    (await page.evaluate(() => JSON.parse(localStorage.getItem("n0-envios") || "[]").length)) === 1, await toast());
+  await page.click('button[data-a="recargar"]');
+  await espera(700);
+  bien("y se anota al volver", (await page.evaluate(() => localStorage.getItem("n0-envios"))) === null &&
+    st.mensajes.filter(m => m.ins === "a" && m.paso === "botella" && !m.anulado).length === 1 && (await page.locator('.fila.msj[data-id="a"]').count()) === 0);
+  await page.locator(".hist li", { hasText: "Ana Lucia" }).locator("button").click();
+  await espera(500);
+
+  await page.locator('.fila.msj[data-id="b"] .cuerpo').click();
+  await espera(250);
+  let fb = await page.locator(".msj-sec").innerText();
+  bien("la ficha dice qué le toca", /Le toca: Le faltan 2/i.test(fb) && /¡Va muy bien, Bruno! Lleva 3 de 5: le faltan solo 2 clases/.test(fb), fb);
+  await page.click('.msj-sec .chip[data-t="tu"]');
+  await espera(400);
+  fb = await page.locator(".msj-sec").innerText();
+  bien("cambia a tú solo para él", /¡Vas muy bien, Bruno! Llevas 3 de 5: te faltan solo 2 clases/.test(fb) && st.estado.b.trato === "tu", fb);
+  await page.screenshot({ path: "/tmp/n0-12-ficha-mensajes.png", fullPage: true });
+  await page.click('.msj-sec button[data-a="avisado"]');
+  await espera(500);
+  fb = await page.locator(".msj-sec").innerText();
+  bien("le avisó en persona y queda al día", /Al día: hoy no le toca mensaje\. Si no viene, el viernes 30 de octubre le toca «Quedan 15 días»/.test(fb) &&
+    /Le faltan 2 · 21 oct · en persona/.test(fb), fb);
+  await page.click('.msj-sec button[data-a="verOtros"]');
+  await page.click('.msj-sec .chip[data-k="falta1"]');
+  await espera(200);
+  fb = await page.locator(".msj-sec").innerText();
+  bien("puede mandar otro mensaje a mano", /Elegiste: Le falta 1/i.test(fb) && /¡Felicitaciones, Bruno! Estás a 1 clase/.test(fb), fb);
+  await page.click('.msj-sec button[data-a="elegirPaso"][data-k=""]');
+  await espera(150);
+  bien("y volver", !/Elegiste/i.test(await page.locator(".msj-sec").innerText()));
+  await page.click('.x[aria-label="Cerrar"]');
+  await espera(150);
+
+  /* editor de la secuencia */
+  await page.click('button[data-a="editarMensajes"]');
+  await espera(200);
+  let ed = await page.locator(".modal").innerText();
+  bien("el editor lista la secuencia", /Al inscribirse/i.test(ed) && /Por asistencia/i.test(ed) && /Si no viene/i.test(ed) && (await page.locator(".modal .paso").count()) === 12, ed.slice(0, 400));
+  await page.click('.modal button[data-a="abrirPaso"][data-k="clase1"]');
+  await espera(150);
+  bien("abre con la versión de usted", (await page.inputValue("#mTexto")).indexOf("¡Felicitaciones por su primera clase") === 0);
+  await page.fill("#mTexto", "Hola {nombre}, felicitaciones por su primera clase. Tiene hasta el {limite}.");
+  await espera(100);
+  bien("vista previa en vivo", (await page.locator("#mPrev").innerText()) === "Hola María, felicitaciones por su primera clase. Tiene hasta el viernes 20 de noviembre.", await page.locator("#mPrev").innerText());
+  await page.click('.modal .chip[data-m="{dias}"]');
+  bien("inserta un marcador donde estaba", /\{dias\}$/.test(await page.inputValue("#mTexto")), await page.inputValue("#mTexto"));
+  bien("con un espacio antes", / \{dias\}$/.test(await page.inputValue("#mTexto")));
+  await page.screenshot({ path: "/tmp/n0-11-editor.png" });
+  await page.fill("#mTexto", "Hola {Nombre}, hasta el {límite}");
+  await espera(100);
+  bien("marcadores sin importar mayúsculas ni tildes", (await page.locator("#mPrev").innerText()) === "Hola María, hasta el viernes 20 de noviembre", await page.locator("#mPrev").innerText());
+  await page.fill("#mTexto", "Hola {nombr}");
+  await page.click('.modal button[data-a="guardarPaso"]');
+  await espera(200);
+  bien("avisa si un marcador está mal escrito", /Revisa \{nombr\}/.test(await toast()) && !st.plantillas.some(x => x.clave === "clase1"), await toast());
+  await page.fill("#mTexto", "Hola {nombre}, felicitaciones por su primera clase. Tiene hasta el {limite}.");
+  await page.click('.modal button[data-a="guardarPaso"]');
+  await espera(400);
+  const pl1 = st.plantillas.find(x => x.clave === "clase1");
+  bien("guarda solo lo que cambió", !!pl1 && pl1.usted === "Hola {nombre}, felicitaciones por su primera clase. Tiene hasta el {limite}." && pl1.tu === null, JSON.stringify(pl1));
+  bien("marca el paso como editado", /Primera clase\s*editado/i.test(await page.locator(".modal").innerText()));
+  await page.click('.modal button[data-a="abrirPaso"][data-k="clase1"]');
+  await page.click('.modal button[data-a="restaurarPaso"]');
+  await espera(400);
+  const pl2 = st.plantillas.find(x => x.clave === "clase1");
+  bien("vuelve al original", !!pl2 && pl2.usted === null && pl2.tu === null && !/Primera clase\s*editado/i.test(await page.locator(".modal").innerText()));
+  await page.click('.modal button[data-a="abrirPaso"][data-k="botella"]');
+  await page.uncheck("#mActivo");
+  await page.click('.modal button[data-a="guardarPaso"]');
+  await espera(400);
+  bien("apaga un paso", /Ganó la botella\s*apagado/i.test(await page.locator(".modal").innerText()));
+  await page.click('.modal .chip[data-a="tratoDefecto"][data-t="tu"]');
+  await espera(400);
+  bien("cambia el trato por defecto", st.cfg.trato === "tu");
+  await page.click('.x[aria-label="Cerrar"]');
+  await espera(150);
+  bien("un paso apagado no se propone", (await page.locator('.fila.msj[data-id="a"]').count()) === 0);
+  await page.click('button[data-a="editarMensajes"]');
+  await page.click('.modal button[data-a="abrirPaso"][data-k="botella"]');
+  bien("el editor abre con el trato por defecto", (await page.inputValue("#mTexto")).indexOf("Completaste tus 5 clases") > 0);
+  await page.check("#mActivo");
+  await page.click('.modal button[data-a="guardarPaso"]');
+  await espera(400);
+  await page.click('.x[aria-label="Cerrar"]');
+  await espera(150);
+  const prevA = await page.locator('.fila.msj[data-id="a"] .prev').innerText();
+  bien("con tú por defecto le escribe de tú",
+    prevA === "¡Felicitaciones, Ana! 🎉 Completaste tus 5 clases y tu botella de acero ya está asegurada. Ahora ve por tu Empiece Ya: si lo logras, ganas también el utensilio de 1.5 litros. ¡Tú puedes!", prevA);
+
+  /* 6d · la secuencia en el tiempo (personas de prueba que luego se quitan) */
+  const extra = [
+    ["s1", "SARA UNO SEMANA", "2026-10-12", null],        // 9 días, sin clases → Va una semana
+    ["s2", "SOFIA DOS QUINCE", "2026-10-01", null],       // le quedan 10 días, sin clases → Quedan 15 días
+    ["s3", "SAUL TRES SIETE", "2026-09-25", "k2"],        // le quedan 4 días, su única clase fue hace 22 → Quedan 7 días
+    ["s4", "SILVIA CUATRO CIERRE", "2026-09-15", "k0"],   // venció hace 6 días → Cumplió sus 30 días
+    ["s5", "SIMON CINCO ACTIVO", "2026-10-05", "k9"],     // le quedan 14 días pero vino hace 5 → Primera clase
+    ["s6", "SUSANA SEIS NUEVA", "2026-10-18", null]       // recién inscrita, ya se le dio la bienvenida → nada
+  ];
+  extra.forEach(function (x, i) {
+    st.ins.push({ id: x[0], nombre: x[1], celular: "95900000" + (i + 1), afiliador: "ROSA HILDA ZEBALLOS HUANCA", fecha_inscripcion: x[2], origen: "registro", estado_registro: "procesado", codigo: null });
+    if (x[3]) st.asis.push({ clase: x[3], ins: x[0], presente: true });
+  });
+  st.mensajes.push({ id: nuevoId(), ins: "s6", paso: "bienvenida", modo: "whatsapp", texto: "Hola", en: "2026-10-18", anulado: false });
+  await page.click('button[data-a="recargar"]');
+  await espera(600);
+  const grupoDe = async id => {
+    const f = page.locator('.fila.msj[data-id="' + id + '"]');
+    if (!(await f.count())) return "";
+    return f.evaluate(el => { let h = el.previousElementSibling; while (h && !h.matches("h2")) h = h.previousElementSibling; return h ? h.textContent : ""; });
+  };
+  const g = {};
+  for (const id of ["s1", "s2", "s3", "s4", "s5", "s6"]) g[id] = await grupoDe(id);
+  bien("semana sin venir", /^Va una semana/.test(g.s1), g.s1);
+  bien("a 15 días", /^Quedan 15 días/.test(g.s2), g.s2);
+  bien("a 7 días aunque vino al inicio", /^Quedan 7 días/.test(g.s3), g.s3);
+  bien("al cumplir sus 30 días", /^Cumplió sus 30 días/.test(g.s4), g.s4);
+  bien("si viene, la felicitación gana al recordatorio", /^Primera clase/.test(g.s5), g.s5);
+  bien("lo ya mandado no se repite", g.s6 === "", g.s6);
+  const pS2 = await page.locator('.fila.msj[data-id="s2"] .prev').innerText();
+  bien("días que le quedan y su avance", pS2 === "Hola Sofia, tienes 10 días para ganar tu botella de acero (hasta el sábado 31 de octubre). Todavía no has venido a ninguna clase. ¡Aprovecha, te esperamos hoy a las 4:00 p. m.!", pS2);
+  const pS3 = await page.locator('.fila.msj[data-id="s3"] .prev').innerText();
+  bien("últimos días con lo que lleva", pS3 === "Hola Saul, ¡últimos días! Tienes 4 días para ganar tu botella de acero: tu plazo vence el domingo 25 de octubre. Llevas 1 de 5: te faltan 4. Te esperamos hoy a las 4:00 p. m.", pS3);
+  extra.forEach(function (x) {
+    st.ins.find(y => y.id === x[0]).borrado = true;
+    st.asis.filter(a => a.ins === x[0]).forEach(a => { a.presente = false; });
+  });
+  await page.click('button[data-a="recargar"]');
+  await espera(600);
+
   /* 7 · botellas */
   await page.click('button.tab[data-tab="botellas"]');
   await espera(200);
@@ -412,6 +614,12 @@ function bien(nombre, cond, extra) {
   bien("descontar: Elena", /Descontar en su Empiece Ya\s*1/i.test(bot) && /Elena Segunda/.test(bot));
   bien("viene con el Empiece Ya: Gloria", /Su botella viene con el Empiece Ya\s*1/i.test(bot) && /Gloria Maritza/.test(bot));
   bien("entregadas: Ana y Elena", /Entregadas\s*2/i.test(bot));
+  const [pop2] = await Promise.all([page.waitForEvent("popup"), page.click('.fila.bot a[data-envio="recoger"]')]);
+  const urlR = decodeURIComponent(pop2.url());
+  await pop2.close();
+  await espera(600);
+  bien("avisa que recoja la botella", /Hola Fanny, tu botella de acero ya te espera en la oficina/.test(urlR) && st.mensajes.some(m => m.ins === "f" && m.paso === "recoger"), urlR);
+  bien("anota cuándo se le avisó", /le avisaste el 21 oct/.test(await page.locator("main").innerText()));
   await page.click('button[data-a="descontar"]');
   await espera(400);
   const bot2 = await page.locator("main").innerText();
