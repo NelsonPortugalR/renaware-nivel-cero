@@ -51,8 +51,9 @@ Empiece Ya. Si después gana el Empiece Ya, ese premio se entrega sin botella.
   tercero, no ganó; mientras ese resultado no esté cargado como oficial, queda
   *esperando resultados*.
 - Niveles leídos de los premios (`eya_premios.items`): I = utensilio 1.5L +
-  botella, II = Multi Cooker (antes cocina de inducción), III = Nutrex Press
-  (antes Juego Chef I), Miami = viaje. El detalle existe desde el PB10 de 2026.
+  botella, II = Multi Cooker (antes cocina de inducción), III = Nutrex Press u
+  Olla a Presión 8L desde el programa del 3 de setiembre (antes Juego Chef I),
+  Miami = viaje. El detalle existe desde el PB10 de 2026.
 
 ## La secuencia de mensajes
 
