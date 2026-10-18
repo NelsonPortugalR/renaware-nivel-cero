@@ -348,6 +348,7 @@ function bien(nombre, cond, extra) {
   bien("tabla por mes", /oct 2026/.test(num) && /set 2026/.test(num) && /ago 2026/.test(num) && /1 sin seguimiento/.test(num));
   bien("horarios y afiliadores", /Asistencia por horario/i.test(num) && /Por quién los afilió/i.test(num));
   bien("explica a los sin seguimiento", /1 inscrito de antes del 23 set/.test(num), num.slice(-300));
+  bien("enlaza al portal de Empiece Ya", (await page.locator('a[href="https://empiece-ya.nelson1614.workers.dev"]').count()) === 1);
   await page.screenshot({ path: "/tmp/n0-4-numeros.png", fullPage: true });
 
   /* 9 · editar y borrar una clase */

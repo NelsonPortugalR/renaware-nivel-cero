@@ -687,6 +687,7 @@ function vistaNumeros() {
   if (sinSeg) html += '<p class="hint">' + plural(sinSeg, "inscrito", "inscritos") + " de antes del " + (S.d.primera_clase ? fCorta(S.d.primera_clase) : "seguimiento") +
     (sinSeg === 1 ? " no tiene asistencias registradas y no entra" : " no tienen asistencias registradas y no entran") +
     " en los porcentajes. Si tienes sus asistencias en papel, crea esas clases con su fecha y márcalas.</p>";
+  html += '<p class="mt"><a class="lk" href="https://empiece-ya.nelson1614.workers.dev" target="_blank" rel="noopener">Ver los ganadores del Empiece Ya en su portal ↗</a></p>';
   return html;
 }
 function kpi(t, v, s) {
