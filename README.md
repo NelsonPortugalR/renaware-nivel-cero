@@ -12,18 +12,18 @@ Empiece Ya. Si después gana el Empiece Ya, ese premio se entrega sin botella.
   los demás se pueden mostrar, pero no suman. Clases pasadas se crean con su
   fecha para cargar asistencias en papel.
 - **Inscritos**: en curso, lograron, vencieron. Cada uno con sus clases, plazo,
-  código Rena Ware, Empiece Ya, botella y un WhatsApp con el mensaje que toca
-  (cuánto le falta y hasta cuándo, o que recoja su botella). En la ficha se
-  agregan clases: una guardada de su plazo con un toque, u otro día con solo la
-  fecha (si ese día no hay clase, se crea con la hora habitual o sin hora, y
-  tema opcional). Cada clase se puede quitar.
-- **Mensajes de seguimiento** (Inscritos → *Por escribir*): cada día dice a quién
-  escribirle y qué. El botón de WhatsApp abre el chat con el mensaje listo y lo
-  deja anotado; también se puede marcar *le avisé en persona* u *omitir*, y
-  deshacer. En la ficha: qué le toca, otro mensaje a mano, historial y trato
-  (tú o usted) por persona. Los textos se editan en *Ver y editar los mensajes*.
+  código Rena Ware, Empiece Ya y botella. En la ficha se agregan clases: una
+  guardada de su plazo con un toque, u otro día con solo la fecha (si ese día no
+  hay clase, se crea con la hora habitual o sin hora, y tema opcional). Cada
+  clase se puede quitar.
 - **Botellas**: por entregar, entregadas, a descontar en el Empiece Ya, y las
   que vienen dentro del Empiece Ya porque lo ganó antes de recibirla.
+
+Los **mensajes de WhatsApp** a los nuevos (bienvenida y seguimiento de sus 30
+días) ya no se mandan desde aquí: van en
+[Bienvenida](https://renaware-bienvenida.pages.dev), que lee estas mismas
+clases. La ficha tiene *Abrir en Bienvenida* (`#a=<id>`) y en Botellas,
+*Avisar* abre ahí el mensaje para que recoja su botella (`#a=<id>&paso=recoger`).
 - **Empiece Ya**: ganadores de WV08 por año y por nivel (I, II, III, Miami),
   agrupados por período, cruzados con el Nivel Cero: quién lo hizo (y su
   botella), quién ganó sin completar las 5 clases y quién es de antes o no
@@ -55,27 +55,6 @@ Empiece Ya. Si después gana el Empiece Ya, ese premio se entrega sin botella.
   Olla a Presión 8L desde el programa del 3 de setiembre (antes Juego Chef I),
   Miami = viaje. El detalle existe desde el PB10 de 2026.
 
-## La secuencia de mensajes
-
-| Paso | Cuándo |
-|---|---|
-| Bienvenida | recién inscrito, mientras no venga a ninguna clase (primera semana) |
-| Primera clase · Segunda clase · Le faltan 2 · Le falta 1 | después de su 1.ª, 2.ª, 3.ª y 4.ª clase |
-| Ganó la botella (o *y ya tiene su Empiece Ya*) | al completar sus 5 clases, hasta 10 días después |
-| Va una semana | a los 7 días, si todavía no vino a ninguna clase |
-| Quedan 15 días · Quedan 7 días | a 15 y 7 días de su fecha límite, si no vino en la última semana |
-| Cumplió sus 30 días | al terminar sin las 5 clases, hasta 10 días después |
-| Recoger la botella | a mano, desde Botellas |
-
-- Se propone solo el paso más reciente: si uno no se mandó y ya le tocó otro, el
-  viejo no aparece. Lo ya mandado no se repite.
-- Marcadores: `{nombre}` `{limite}` `{dias}` `{avance}` `{proxima}` `{horarios}`
-  `{clases}` `{faltan}`. `{proxima}` sale del horario habitual y la hora del
-  celular. Lo editado se guarda en `n0_plantillas`; vacío = el texto original
-  (que vive en `index.html`).
-- Envíos en `n0_mensajes` (deshacer = `anulado`). Si no hay señal, el envío
-  queda en el celular y se anota al volver.
-
 ## Cómo está hecho
 
 Un solo `index.html`, sin librerías ni build. Llama a Supabase
@@ -83,12 +62,11 @@ Un solo `index.html`, sin librerías ni build. Llama a Supabase
 la sesión de admin (`admin_login`, la misma clave del panel).
 
 - Tablas: `n0_config`, `n0_clases`, `n0_asistencias`, `n0_estado`,
-  `n0_inscritos_manual`, `n0_plantillas`, `n0_mensajes`. Vista `n0_inscritos`.
-  RLS activo, sin acceso directo.
+  `n0_inscritos_manual`. Vista `n0_inscritos`. RLS activo, sin acceso directo.
+  `n0_mensajes` y `n0_plantillas` (y el trato de `n0_estado` y `n0_config`)
+  guardan los mensajes; los usa Bienvenida por sus funciones `wa_bv_*`.
 - Funciones con sesión: `n0_datos`, `n0_clase_guardar`, `n0_clase_borrar`,
-  `n0_marcar`, `n0_estado_guardar`, `n0_manual_guardar`, `n0_manual_borrar`,
-  `n0_mensaje_registrar`, `n0_mensaje_anular`, `n0_plantilla_guardar`,
-  `n0_config_guardar`.
+  `n0_marcar`, `n0_estado_guardar`, `n0_manual_guardar`, `n0_manual_borrar`.
   El cálculo vive en `n0_inscritos_json` (interna, sin permisos públicos).
 - Nada se borra de verdad: desmarcar pone `presente = false`, borrar una clase
   la marca `borrada`, borrar un inscrito a mano lo marca `borrado`.
@@ -97,7 +75,7 @@ la sesión de admin (`admin_login`, la misma clave del panel).
 ## Pruebas
 
 ```bash
-node pruebas/prueba.js   # Chromium real con un Supabase falso; 140+ aserciones y capturas en /tmp/n0-*.png
+node pruebas/prueba.js   # Chromium real con un Supabase falso; 110+ aserciones y capturas en /tmp/n0-*.png
 ```
 
 ## Despliegue

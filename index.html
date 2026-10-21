@@ -113,31 +113,9 @@ input[type=date].in,input[type=time].in{min-height:46px}
 .clases-p li>span{min-width:0}
 .clases-p li>button{flex:0 0 auto;white-space:nowrap}
 .caja-edit{border:1px solid var(--rule);background:var(--soft);padding:10px;margin-top:10px}
-/* mensajes de seguimiento */
-.btn svg{width:16px;height:16px;flex:0 0 auto}
-.fila.msj{align-items:flex-start}
-.prev{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:13px;line-height:1.45;color:var(--ink70);margin-top:3px}
-.der.col{flex-direction:column;align-items:flex-end;gap:10px}
-.wa.pend{position:relative}
-.wa.pend::after{content:"";position:absolute;top:4px;right:4px;width:9px;height:9px;border-radius:50%;background:var(--ambar);border:2px solid #fff}
+/* los mensajes se mandan desde Bienvenida */
 .msj-sec{border-top:1px solid var(--rule);padding-top:14px;margin:0 0 18px}
-.msj-cab{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.msj-caja{border:1px solid var(--rule);background:var(--soft);padding:10px 12px;margin-top:10px}
-.msj-texto{white-space:pre-wrap;font-size:14px;line-height:1.5;margin:4px 0 0;color:var(--ink);overflow-wrap:anywhere}
-.hist{list-style:none;padding:0;margin:10px 0 0;font:12px/1.8 var(--mono);color:var(--ink70)}
-.hist.card{padding:8px 14px}
-.hist li{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.hist li>span{min-width:0}
-.hist li>button{flex:0 0 auto}
-.chips.chico .chip{min-height:32px;padding:7px 10px;font-size:10.5px}
-.chip.mk{text-transform:none;letter-spacing:.02em}
-.regla.mt{margin-top:14px}
-.paso{padding:11px 0;border-top:1px solid var(--rule)}
-.paso-cab{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.paso-cab .lk{margin-left:auto}
-.paso.abierto{background:var(--soft);margin:0 -16px;padding:12px 16px}
-.marcas code{font:11px var(--mono);background:var(--soft);padding:1px 4px}
-textarea#mTexto{min-height:150px;font-size:15px;line-height:1.45}
+.msj-sec .hint{margin:4px 0 0}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{border:1px solid var(--rule);background:#fff;padding:9px 12px;font:11px/1 var(--mono);text-transform:uppercase;letter-spacing:.07em;color:var(--ink70);min-height:38px}
 .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -161,8 +139,6 @@ textarea#mTexto{min-height:150px;font-size:15px;line-height:1.45}
 .pts{display:inline-flex;gap:3px;flex:0 0 auto}
 .pts i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--ink40);display:block}
 .pts i.on{background:var(--acero);border-color:var(--acero)}
-.wa{display:grid;place-items:center;width:42px;height:42px;border:1px solid var(--rule);color:var(--verde);background:#fff}
-.wa svg{width:20px;height:20px}
 .num{display:flex;flex-direction:column;align-items:flex-end;font:700 21px/1 var(--mono)}
 .num small{font:10px/1.5 var(--mono);color:var(--ink40);text-transform:uppercase;letter-spacing:.07em;font-weight:400}
 
@@ -286,7 +262,7 @@ var DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "s�
 var DIAS_C = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 var MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre"];
 var MESES_C = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "set", "oct", "nov", "dic"];
-var ICON_MSG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2-5.2A8.4 8.4 0 1 1 21 11.5z"/></svg>';
+var BIENVENIDA = "https://renaware-bienvenida.pages.dev";   // los mensajes de WhatsApp a los nuevos se mandan desde ahí
 
 function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { if (v == null) window.localStorage.removeItem(k); else window.localStorage.setItem(k, v); } catch (e) {} }
@@ -294,7 +270,7 @@ function lsSet(k, v) { try { if (v == null) window.localStorage.removeItem(k); e
 var S = {
   token: lsGet(LS_TOKEN), d: null, errorCarga: null, loginError: null, ocupado: false,
   tab: "asistencia", clase: null, buscaAsis: "", fuera: false, masClases: false,
-  filtro: "en_curso", buscaIns: "", eyAnio: null, eyNivel: 0, eyCruce: null, modal: null, filtroElegido: false
+  filtro: "en_curso", buscaIns: "", eyAnio: null, eyNivel: 0, eyCruce: null, modal: null
 };
 var IDX = { ins: {}, presentes: {} };   // presentes[claseId][inscritoId] = true
 var enVuelo = {};
@@ -346,12 +322,11 @@ function bonito(msg) {
 }
 
 /* ---------------------------------------------------------- red */
-function rpc(fn, args, sigue) {
+function rpc(fn, args) {
   return fetch(SB_URL + "/rest/v1/rpc/" + fn, {
     method: "POST",
     headers: { "apikey": SB_KEY, "Authorization": "Bearer " + SB_KEY, "Content-Type": "application/json" },
-    body: JSON.stringify(args || {}),
-    keepalive: !!sigue
+    body: JSON.stringify(args || {})
   }).then(function (r) {
     return r.text().then(function (t) {
       var j = null;
@@ -407,10 +382,7 @@ function cargar(silencioso) {
   if (!S.token) return Promise.resolve();
   if (!silencioso && !S.d) render();
   return rpc("n0_datos", { p_token: S.token }).then(function (d) {
-    var primera = !S.d;
-    S.d = d; S.errorCarga = null; indexar(); ponerEnviosPend();
-    if (primera && !S.filtroElegido && porEscribir().length) S.filtro = "escribir";
-    setTimeout(reintentarEnvios, 0);
+    S.d = d; S.errorCarga = null; indexar();
     if (S.clase && !claseDe(S.clase)) S.clase = null;
     if (S.modal && S.modal.tipo === "persona" && !IDX.ins[S.modal.id]) S.modal = null;
   }).catch(function (e) {
@@ -536,195 +508,28 @@ function puntos(n) {
   return h + "</span>";
 }
 
-/* WhatsApp con el mensaje que toca según dónde está la persona */
 function horariosTexto() {
   var l = horarios().map(function (x) { return "el " + DIAS[x.dia] + " a las " + hora12(x.hora); });
   if (l.length <= 1) return l.join("");
   return l.slice(0, -1).join(", ") + " o " + l[l.length - 1];
 }
-/* ---------------------------------------------------------- mensajes de seguimiento */
-/* Qué mensaje le toca a cada uno según su avance y su plazo. Los textos originales viven aquí;
-   lo que se edite se guarda en n0_plantillas (vacío = el original). Cada paso tiene versión de tú y de usted. */
-var PASOS = [
-  { k: "bienvenida", g: "inicio", t: "Bienvenida", cuando: "Recién inscrito, mientras no venga a ninguna clase (su primera semana).",
-    tu: "Hola {nombre}, ¡qué gusto tenerte en el equipo! 🎉 Tu primer reto es el Nivel Cero: si vienes a 5 capacitaciones hasta el {limite}, ganas tu botella de acero, el adelanto de tu Empiece Ya. La próxima clase es {proxima}. ¡Te esperamos!",
-    usted: "Hola {nombre}, ¡qué gusto tenerle en el equipo! 🎉 Su primer reto es el Nivel Cero: si viene a 5 capacitaciones hasta el {limite}, gana su botella de acero, el adelanto de su Empiece Ya. La próxima clase es {proxima}. ¡Le esperamos!" },
-  { k: "clase1", g: "asis", t: "Primera clase", cuando: "Después de su primera clase.",
-    tu: "¡Felicitaciones por tu primera clase, {nombre}! 💪 Ya llevas 1 de 5. Te faltan 4 para ganar tu botella de acero y tienes hasta el {limite}. La próxima es {proxima}.",
-    usted: "¡Felicitaciones por su primera clase, {nombre}! 💪 Ya lleva 1 de 5. Le faltan 4 para ganar su botella de acero y tiene hasta el {limite}. La próxima es {proxima}." },
-  { k: "clase2", g: "asis", t: "Segunda clase", cuando: "Después de su segunda clase.",
-    tu: "¡Muy bien, {nombre}! Ya llevas 2 de 5 clases. Sigue así: tienes hasta el {limite} para ganar tu botella de acero. Te esperamos {proxima}.",
-    usted: "¡Muy bien, {nombre}! Ya lleva 2 de 5 clases. Siga así: tiene hasta el {limite} para ganar su botella de acero. Le esperamos {proxima}." },
-  { k: "faltan2", g: "asis", t: "Le faltan 2", cuando: "Después de su tercera clase.",
-    tu: "¡Vas muy bien, {nombre}! Llevas 3 de 5: te faltan solo 2 clases para tu botella de acero. Tienes hasta el {limite}. Te esperamos {proxima}.",
-    usted: "¡Va muy bien, {nombre}! Lleva 3 de 5: le faltan solo 2 clases para su botella de acero. Tiene hasta el {limite}. Le esperamos {proxima}." },
-  { k: "falta1", g: "asis", t: "Le falta 1", cuando: "Después de su cuarta clase.",
-    tu: "¡Felicitaciones, {nombre}! Estás a 1 clase de ganar tu botella de acero 🏆 Tienes hasta el {limite}. Te esperamos {proxima}.",
-    usted: "¡Felicitaciones, {nombre}! Está a 1 clase de ganar su botella de acero 🏆 Tiene hasta el {limite}. Le esperamos {proxima}." },
-  { k: "botella", g: "asis", t: "Ganó la botella", cuando: "Al completar sus 5 clases, si aún no gana el Empiece Ya.",
-    tu: "¡Felicitaciones, {nombre}! 🎉 Completaste tus 5 clases y tu botella de acero ya está asegurada. Ahora ve por tu Empiece Ya: si lo logras, ganas también el utensilio de 1.5 litros. ¡Tú puedes!",
-    usted: "¡Felicitaciones, {nombre}! 🎉 Completó sus 5 clases y su botella de acero ya está asegurada. Ahora vaya por su Empiece Ya: si lo logra, gana también el utensilio de 1.5 litros. ¡Usted puede!" },
-  { k: "botella_ey", g: "asis", t: "Ganó la botella y ya tiene su Empiece Ya", cuando: "Al completar sus 5 clases, si ya ganó el Empiece Ya.",
-    tu: "¡Felicitaciones, {nombre}! 🎉 Completaste tus 5 clases y además ya ganaste tu Empiece Ya: tu botella de acero viene junto con tu premio. ¡Sigue así!",
-    usted: "¡Felicitaciones, {nombre}! 🎉 Completó sus 5 clases y además ya ganó su Empiece Ya: su botella de acero viene junto con su premio. ¡Siga así!" },
-  { k: "semana1", g: "falta", t: "Va una semana", cuando: "A los 7 días de inscrito, si todavía no vino a ninguna clase.",
-    tu: "Hola {nombre}, ya va una semana de tu inscripción. Recuerda recoger tu kit y tus listas. Y no te olvides del Nivel Cero: si vienes a 5 capacitaciones hasta el {limite}, ganas tu botella de acero. La próxima clase es {proxima}.",
-    usted: "Hola {nombre}, ya va una semana de su inscripción. Recuerde recoger su kit y sus listas. Y no se olvide del Nivel Cero: si viene a 5 capacitaciones hasta el {limite}, gana su botella de acero. La próxima clase es {proxima}." },
-  { k: "quedan15", g: "falta", t: "Quedan 15 días", cuando: "A 15 días de su fecha límite, si no vino en la última semana.",
-    tu: "Hola {nombre}, tienes {dias} para ganar tu botella de acero (hasta el {limite}). {avance} ¡Aprovecha, te esperamos {proxima}!",
-    usted: "Hola {nombre}, tiene {dias} para ganar su botella de acero (hasta el {limite}). {avance} ¡Aproveche, le esperamos {proxima}!" },
-  { k: "quedan7", g: "falta", t: "Quedan 7 días", cuando: "A 7 días de su fecha límite, si no vino en la última semana.",
-    tu: "Hola {nombre}, ¡últimos días! Tienes {dias} para ganar tu botella de acero: tu plazo vence el {limite}. {avance} Te esperamos {proxima}.",
-    usted: "Hola {nombre}, ¡últimos días! Tiene {dias} para ganar su botella de acero: su plazo vence el {limite}. {avance} Le esperamos {proxima}." },
-  { k: "cierre", g: "falta", t: "Cumplió sus 30 días", cuando: "Al terminar sus 30 días sin completar las 5 clases (hasta 10 días después).",
-    tu: "Hola {nombre}, ya cumpliste tus 30 días del Nivel Cero, pero aún tienes la oportunidad de empezar con todo estos próximos 30 días con los nuevos concursos. ¡Te esperamos {proxima}!",
-    usted: "Hola {nombre}, ya cumplió sus 30 días del Nivel Cero, pero aún tiene la oportunidad de empezar con todo estos próximos 30 días con los nuevos concursos. ¡Le esperamos {proxima}!" },
-  { k: "recoger", g: "otro", t: "Recoger la botella", cuando: "Desde Botellas, para avisarle que la recoja.",
-    tu: "Hola {nombre}, tu botella de acero ya te espera en la oficina 🏆 Pasa a recogerla cuando vengas.",
-    usted: "Hola {nombre}, su botella de acero ya le espera en la oficina 🏆 Pase a recogerla cuando venga." }
-];
-var PASO = {};
-PASOS.forEach(function (x, i) { x.i = i; PASO[x.k] = x; });
-var GRUPOS = [["inicio", "Al inscribirse"], ["asis", "Por asistencia"], ["falta", "Si no viene"], ["otro", "Otros"]];
-var MARCAS = [["nombre", "su nombre"], ["limite", "su fecha límite"], ["dias", "los días que le quedan"],
-              ["avance", "cuánto lleva y cuánto le falta"], ["proxima", "la próxima clase"], ["horarios", "los horarios de clase"],
-              ["clases", "clases que lleva"], ["faltan", "clases que le faltan"]];
-var MARCA = {};
-MARCAS.forEach(function (m) { MARCA[m[0]] = 1; });
-function claveMarca(n) { return String(n).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim(); }
-
-function plantilla(k) {
-  var b = PASO[k] || { tu: "", usted: "" }, g = {};
-  (S.d.plantillas || []).forEach(function (x) { if (x.clave === k) g = x; });
-  return { tu: g.tu || b.tu, usted: g.usted || b.usted, activo: g.activo !== false, editado: !!(g.tu || g.usted) };
-}
-function nombrePaso(k) { return (PASO[k] || { t: k }).t; }
-function tratoDe(p) { return (p && p.trato) || cfg().trato || "usted"; }
-function nDias(r) { return r <= 0 ? "solo hoy" : r === 1 ? "1 día" : r + " días"; }
-function avanceTxt(p, tr) {
-  var v = p.validas || 0, m = meta(), f = Math.max(m - v, 0), tu = tr === "tu";
-  if (!v) return tu ? "Todavía no has venido a ninguna clase." : "Todavía no ha venido a ninguna clase.";
-  return (tu ? "Llevas " : "Lleva ") + v + " de " + m + ": " + (tu ? "te " : "le ") + (f === 1 ? "falta 1." : "faltan " + f + ".");
-}
-/* la próxima clase según el horario habitual: "hoy a las 4:00 p. m.", "mañana martes a las 9:30 a. m.", "el viernes 23 a las…" */
-function proximaClase() {
-  var hs = horarios();
-  if (!hs.length) return null;
-  var h0 = hoy(), ahora = new Date(), min = ahora.getHours() * 60 + ahora.getMinutes();
-  for (var i = 0; i < 8; i++) {
-    var f = sumarDias(h0, i), d = dow(f);
-    var del = hs.filter(function (x) {
-      if (x.dia !== d) return false;
-      if (i) return true;
-      var q = x.hora.split(":");
-      return +q[0] * 60 + +q[1] > min;
-    });
-    if (del.length) {
-      var hr = " a las " + hora12(del[0].hora);
-      return i === 0 ? "hoy" + hr : i === 1 ? "mañana " + DIAS[d] + hr : "el " + DIAS[d] + " " + partes(f).d + hr;
-    }
-  }
-  return null;
-}
-function llenar(t, p, tr) {
-  tr = tr || tratoDe(p);
-  var v = {
-    nombre: pila(p.nombre), limite: fLarga(p.vence), dias: nDias(diasEntre(hoy(), p.vence)),
-    avance: avanceTxt(p, tr), clases: String(p.validas || 0), faltan: String(Math.max(meta() - (p.validas || 0), 0)),
-    proxima: proximaClase() || horariosTexto(), horarios: horariosTexto()
-  };
-  return String(t || "").replace(/\{([^{}\n]{1,20})\}/g, function (a, n) { var c = claveMarca(n); return v.hasOwnProperty(c) ? v[c] : a; })
-    .replace(/([^.])\.\.(?!\.)/g, "$1.")            // "4:00 p. m." + "." → un solo punto
-    .replace(/[ \t]{2,}/g, " ").replace(/ +\n/g, "\n").trim();
-}
-function textoPaso(k, p, tr) { tr = tr || tratoDe(p); return llenar(plantilla(k)[tr], p, tr); }
-
-function fechasValidas(p) {
-  var l = [];
-  (p.asistencias || []).forEach(function (a) { var c = claseDe(a.c); if (c && a.v) l.push(c.fecha); });
-  return l.sort();
-}
-function pasoAvance(v) {
-  var m = meta();
-  if (v >= m) return "botella";
-  if (v === m - 1) return "falta1";
-  if (v === m - 2) return "faltan2";
-  if (v === 1) return "clase1";
-  if (v === 2) return "clase2";
-  return null;
-}
-/* Los pasos que aplican hoy, cada uno con la fecha en que le tocó. Se manda solo el más reciente:
-   si se pasó uno sin mandar y ya le tocó otro, el viejo ya no se propone. */
-function candidatos(p) {
-  var c = [], h = hoy(), m = meta(), v = p.validas || 0;
-  if (p.excluido || p.estado === "excluido" || p.estado === "sin_seguimiento") return c;
-  var fv = fechasValidas(p);
-  // ganó la botella: se felicita dentro de los 10 días siguientes
-  if (p.estado === "logro") {
-    var fl = p.logro_fecha || fv[m - 1];
-    if (fl && diasEntre(fl, h) <= 10) c.push({ k: ganoEY(p) ? "botella_ey" : "botella", f: fl });
-  }
-  if (p.estado === "en_curso") {
-    var ka = v >= 1 ? pasoAvance(v) : null;
-    if (ka) c.push({ k: ka, f: fv[v - 1] });
-    var d = diasEntre(p.inicio, h), r = diasEntre(h, p.vence), u = fv[fv.length - 1];
-    var quieto = !u || diasEntre(u, h) >= 7;       // "si no viene": ninguna clase en la última semana
-    if (!v && d < 7) c.push({ k: "bienvenida", f: p.inicio });
-    if (!v && d >= 7 && r > 15) c.push({ k: "semana1", f: sumarDias(p.inicio, 7) });
-    if (quieto && r <= 15 && r > 7) c.push({ k: "quedan15", f: sumarDias(p.vence, -15) });
-    if (quieto && r <= 7 && r >= 0) c.push({ k: "quedan7", f: sumarDias(p.vence, -7) });
-  }
-  if (p.estado === "vencio" && diasEntre(p.vence, h) <= 10) c.push({ k: "cierre", f: sumarDias(p.vence, 1) });
-  return c.filter(function (x) { return x.f && plantilla(x.k).activo; });
-}
-function yaMandado(p, k) { return (p.mensajes || []).some(function (x) { return x.paso === k; }); }
-function pasoQueToca(p) {
-  var c = candidatos(p);
-  if (!c.length) return null;
-  c.sort(function (a, b) { return a.f < b.f ? -1 : a.f > b.f ? 1 : PASO[a.k].i - PASO[b.k].i; });
-  var u = c[c.length - 1];
-  return yaMandado(p, u.k) ? null : u;
-}
-function porEscribir() {
-  var l = [];
-  S.d.inscritos.forEach(function (p) { var x = pasoQueToca(p); if (x) l.push({ p: p, x: x }); });
-  return l;
-}
-/* qué le tocará si no viene, para mostrarlo en la ficha */
-function proximoAviso(p) {
-  if (p.estado !== "en_curso") return null;
-  var h = hoy(), l = [];
-  if (!p.validas) l.push({ k: "semana1", f: sumarDias(p.inicio, 7) });
-  l.push({ k: "quedan15", f: sumarDias(p.vence, -15) }, { k: "quedan7", f: sumarDias(p.vence, -7) }, { k: "cierre", f: sumarDias(p.vence, 1) });
-  return l.filter(function (x) { return x.f > h && plantilla(x.k).activo && !yaMandado(p, x.k); })[0] || null;
-}
-
 function celularWA(p) {
   var cel = String(p.celular || "").replace(/\D/g, "");
   if (cel.length === 11 && cel.indexOf("51") === 0) cel = cel.slice(2);
   return /^9\d{8}$/.test(cel) ? cel : null;
 }
-function linkWA(p, texto) {
+function linkWA(p) {
   var cel = celularWA(p);
-  if (!cel) return null;
-  return "https://wa.me/51" + cel + (texto ? "?text=" + encodeURIComponent(texto) : "");
+  return cel ? "https://wa.me/51" + cel : null;
 }
-/* Ícono de WhatsApp de las listas: si le toca un mensaje, se abre con el mensaje listo y queda anotado. */
-function botonWA(p, etiqueta, k) {
-  var x = k ? { k: k } : pasoQueToca(p);
-  var u = linkWA(p, x ? textoPaso(x.k, p) : "");
-  if (!u) return "";
-  return '<a class="wa' + (x && !k ? " pend" : "") + '" href="' + esc(u) + '" target="_blank" rel="noopener"' +
-    (x ? ' data-envio="' + x.k + '" data-id="' + p.id + '"' : "") +
-    ' aria-label="' + esc(etiqueta || ((x ? "Mandar mensaje a " : "Escribir a ") + pila(p.nombre))) + '">' + ICON_MSG + "</a>";
+/* Bienvenida tiene a los nuevos de los últimos 45 días y a quien aún no recoge su botella */
+function enBienvenida(p) {
+  if (p.excluido) return false;
+  return diasEntre(p.inicio, hoy()) <= 45 || (p.estado === "logro" && !p.botella_entregada_en && !ganoEY(p));
 }
-function botonEnviar(p, k, chico) {
-  var u = linkWA(p, textoPaso(k, p));
-  if (!u) return "";
-  return '<a class="btn ok' + (chico ? " sm" : "") + '" href="' + esc(u) + '" target="_blank" rel="noopener" data-envio="' + k + '" data-id="' + p.id + '">' +
-    ICON_MSG + "WhatsApp</a>";
+function enlaceBienvenida(p, paso) {
+  return BIENVENIDA + "/#a=" + encodeURIComponent(p.id) + (paso ? "&paso=" + paso : "");
 }
-function modoTxt(m) { return m === "omitido" ? "omitido" : m === "aviso" ? "en persona" : "WhatsApp"; }
 
 /* ---------------------------------------------------------- vistas */
 function render() {
@@ -752,11 +557,11 @@ function vistaLogin() {
 }
 
 function vistaCabecera() {
-  var escribir = porEscribir().length, botellas = 0;
+  var botellas = 0;
   S.d.inscritos.forEach(function (p) {
     if (estadoBotella(p) === "por_entregar" || descuento(p) === "pendiente") botellas++;
   });
-  var tabs = [["asistencia", "Asistencia", 0], ["inscritos", "Inscritos", escribir], ["botellas", "Botellas", botellas], ["ey", "Empiece Ya", 0], ["numeros", "Números", 0]];
+  var tabs = [["asistencia", "Asistencia", 0], ["inscritos", "Inscritos", 0], ["botellas", "Botellas", botellas], ["ey", "Empiece Ya", 0], ["numeros", "Números", 0]];
   return '<header class="top"><div class="wrap fila-top">' +
       '<div class="marca"><div class="cero"></div><div><div class="caps tiny">Empiece Ya · Equipo Arequipa</div><div class="h1">Nivel Cero</div></div></div>' +
       '<div class="acciones-top"><button class="icono" data-a="recargar" title="Actualizar" aria-label="Actualizar">↻</button>' +
@@ -855,55 +660,17 @@ function filaAsis(p, c, on, dentro) {
 
 /* ----- inscritos */
 function vistaInscritos() {
-  var pend = porEscribir();
-  var cuenta = { escribir: pend.length, en_curso: 0, logro: 0, vencio: 0, todos: S.d.inscritos.length };
+  var cuenta = { en_curso: 0, logro: 0, vencio: 0, todos: S.d.inscritos.length };
   S.d.inscritos.forEach(function (p) { if (cuenta[p.estado] != null) cuenta[p.estado]++; });
-  var chips = [["escribir", "Por escribir"], ["en_curso", "En curso"], ["logro", "Lograron"], ["vencio", "Vencieron"], ["todos", "Todos"]];
+  var chips = [["en_curso", "En curso"], ["logro", "Lograron"], ["vencio", "Vencieron"], ["todos", "Todos"]];
   var html = '<div class="chips">' + chips.map(function (c) {
     return '<button class="chip' + (S.filtro === c[0] ? " on" : "") + '" data-a="filtro" data-f="' + c[0] + '">' + c[1] + "<span>" + cuenta[c[0]] + "</span></button>";
   }).join("") + "</div>";
-  if (S.filtro === "escribir") html += vistaEscribir(pend);
-  else {
-    html += '<input class="in busca" type="search" data-in="buscaIns" placeholder="Buscar por nombre o por quién lo afilió" value="' + esc(S.buscaIns) + '" autocomplete="off" enterkeyhint="search">';
-    html += '<div id="lista-ins">' + listaInscritos() + "</div>";
-  }
+  html += '<input class="in busca" type="search" data-in="buscaIns" placeholder="Buscar por nombre o por quién lo afilió" value="' + esc(S.buscaIns) + '" autocomplete="off" enterkeyhint="search">';
+  html += '<div id="lista-ins">' + listaInscritos() + "</div>";
   html += '<button class="btn sec full" data-a="nuevoManual">+ Agregar inscrito a mano</button>';
   html += '<p class="hint">La lista sale de las afiliaciones del registro. Agrega a mano solo a quien se afilió por otro lado.</p>';
   return html;
-}
-/* Por escribir: los mensajes que tocan hoy, agrupados por paso, y lo que ya se mandó hoy. */
-function vistaEscribir(pend) {
-  var h0 = hoy(), hechos = [];
-  S.d.inscritos.forEach(function (p) {
-    (p.mensajes || []).forEach(function (m) { if (m.en === h0) hechos.push({ p: p, m: m }); });
-  });
-  var html = '<p class="regla mt">Los mensajes que tocan hoy según su avance y su plazo. Toca WhatsApp: se abre con el mensaje listo para enviar y queda anotado.</p>' +
-    '<div class="fila-btn" style="margin:-6px 0 4px"><button class="lk" data-a="editarMensajes">Ver y editar los mensajes</button>' +
-    '<span class="hint">Trato por defecto: ' + (cfg().trato === "tu" ? "tú" : "usted") + "</span></div>";
-  if (!pend.length) html += '<p class="hint mt">Al día: hoy no toca ningún mensaje.</p>';
-  PASOS.forEach(function (ps) {
-    var g = pend.filter(function (y) { return y.x.k === ps.k; });
-    if (!g.length) return;
-    g.sort(function (a, b) { return a.p.vence.localeCompare(b.p.vence) || a.p.nombre.localeCompare(b.p.nombre); });
-    html += '<h2 class="sec-t">' + esc(ps.t) + ' <span class="cuenta">' + g.length + "</span></h2>" + g.map(filaEscribir).join("");
-  });
-  if (hechos.length) {
-    hechos.reverse();
-    html += '<h2 class="sec-t">Mandados hoy <span class="cuenta">' + hechos.length + '</span></h2><ul class="hist card">' + hechos.map(function (y) {
-      return "<li><span>" + esc(titulo(y.p.nombre) + " · " + nombrePaso(y.m.paso) + " · " + modoTxt(y.m.modo)) + "</span>" +
-        (y.m.tmp ? "" : '<button class="lk" data-a="anularEnvio" data-m="' + y.m.id + '">deshacer</button>') + "</li>";
-    }).join("") + "</ul>";
-  }
-  return html;
-}
-function filaEscribir(y) {
-  var p = y.p, k = y.x.k, e = lineaEstado(p), cel = celularWA(p);
-  return '<div class="fila msj" data-id="' + p.id + '">' +
-    '<span class="cuerpo" role="button" tabindex="0" data-a="persona" data-id="' + p.id + '"><span class="nom">' + esc(titulo(p.nombre)) + "</span>" +
-      '<span class="sub ' + e.cls + '">' + esc(e.txt) + (cel ? "" : " · sin celular") + "</span>" +
-      '<span class="prev">' + esc(textoPaso(k, p)) + "</span></span>" +
-    '<span class="der col">' + (cel ? botonEnviar(p, k, true) : '<button class="btn sec sm" data-a="avisado" data-id="' + p.id + '" data-k="' + k + '">Le avisé</button>') +
-      '<button class="lk" data-a="omitir" data-id="' + p.id + '" data-k="' + k + '">omitir</button></span></div>';
 }
 function listaInscritos() {
   var q = plano(S.buscaIns.trim()), f = S.filtro;
@@ -928,7 +695,7 @@ function filaInscrito(p) {
     '<span class="cuerpo"><span class="nom">' + esc(titulo(p.nombre)) + (p.origen === "manual" ? ' <span class="tag">a mano</span>' : "") +
       (p.ey_estado === "gano" ? ' <span class="tag ok">Empiece Ya</span>' : "") + "</span>" +
       '<span class="sub ' + e.cls + '">' + esc(e.txt) + "</span></span>" +
-    '<span class="der">' + puntos(Math.min(p.validas, meta())) + botonWA(p) + "</span></div>";
+    '<span class="der">' + puntos(Math.min(p.validas, meta())) + "</span></div>";
 }
 
 /* ----- botellas */
@@ -959,9 +726,8 @@ function cuerpoPersona(p, sub, extra) {
     '<span class="sub">' + esc(sub) + "</span>" + (extra || "") + "</span>";
 }
 function filaPorEntregar(p) {
-  var av = (p.mensajes || []).filter(function (m) { return m.paso === "recoger"; }).pop();
-  return '<div class="fila bot">' + cuerpoPersona(p, "Logró el " + fCorta(p.logro_fecha) + (av ? " · le avisaste el " + fCorta(av.en) : "")) +
-    '<span class="der">' + botonWA(p, "Avisar a " + pila(p.nombre) + " que la recoja", "recoger") +
+  return '<div class="fila bot">' + cuerpoPersona(p, "Logró el " + fCorta(p.logro_fecha)) +
+    '<span class="der"><a class="btn sec sm" href="' + esc(enlaceBienvenida(p, "recoger")) + '" target="_blank" rel="noopener" aria-label="Avisar a ' + esc(pila(p.nombre)) + ' que la recoja, desde Bienvenida">Avisar ↗</a>' +
     '<button class="btn ok sm" data-a="entregar" data-id="' + p.id + '">Entregué</button></span></div>';
 }
 function filaDescontar(p) {
@@ -1177,7 +943,7 @@ function renderModal() {
   var capa = document.getElementById("capa");
   if (!S.modal || !S.d) { capa.innerHTML = ""; document.body.classList.remove("con-modal"); return; }
   var t = S.modal.tipo;
-  var cont = t === "persona" ? modalPersona() : t === "clase" ? modalClase() : t === "manual" ? modalManual() : t === "mensajes" ? modalMensajes() : modalConfirmar();
+  var cont = t === "persona" ? modalPersona() : t === "clase" ? modalClase() : t === "manual" ? modalManual() : modalConfirmar();
   capa.innerHTML = '<div class="ov" data-a="fondo"><div class="modal" role="dialog" aria-modal="true">' + cont + "</div></div>";
   document.body.classList.add("con-modal");
 }
@@ -1237,7 +1003,10 @@ function modalPersona() {
       "). Tiene hasta el " + esc(etPB(p.ey_fin)) + " (" + esc(fCorta(p.ey_fin.cierre)) + ").</div>" : "") + "</dd>";
   h += "<dt>Botella</dt><dd>" + bloqueBotella(p, ed) + "</dd>";
   h += "</dl>";
-  h += bloqueMensajes(p);
+  if (enBienvenida(p))
+    h += '<section class="msj-sec"><span class="lbl">Mensajes de WhatsApp</span>' +
+      '<p class="hint">La bienvenida y el seguimiento de sus 30 días se mandan desde Bienvenida, con las clases que lleva aquí.</p>' +
+      '<div class="fila-btn"><a class="btn sec sm" href="' + esc(enlaceBienvenida(p)) + '" target="_blank" rel="noopener">Abrir en Bienvenida ↗</a></div></section>';
   h += '<label class="lbl" for="eNota">Nota</label><textarea class="in" id="eNota" rows="2" placeholder="Algo que conviene recordar">' + esc(p.nota || "") + "</textarea>" +
     '<div class="fila-btn"><button class="btn sec sm" data-a="guardarNota">Guardar nota</button></div>';
   h += '<div class="pie">';
@@ -1246,37 +1015,6 @@ function modalPersona() {
     ? '<button class="btn sec sm" data-a="excluir" data-v="0">Volver a incluir en el Nivel Cero</button>'
     : '<button class="lk" data-a="excluir" data-v="1">Sacar del Nivel Cero (duplicado o no aplica)</button>';
   return h + "</div></div>";
-}
-function bloqueMensajes(p) {
-  var md = S.modal, tr = tratoDe(p), toca = pasoQueToca(p), k = md.paso || (toca && toca.k);
-  var h = '<section class="msj-sec"><div class="msj-cab"><span class="lbl" style="margin:0">Mensajes de seguimiento</span>' +
-    '<span class="chips chico">' + ["tu", "usted"].map(function (t) {
-      return '<button class="chip' + (tr === t ? " on" : "") + '" data-a="tratoPersona" data-t="' + t + '">' + (t === "tu" ? "Tú" : "Usted") + "</button>";
-    }).join("") + "</span></div>";
-  if (k) {
-    var cel = celularWA(p);
-    h += '<div class="msj-caja"><span class="lbl">' + esc((md.paso ? "Elegiste: " : "Le toca: ") + nombrePaso(k)) + "</span>" +
-      '<p class="msj-texto">' + esc(textoPaso(k, p)) + "</p>" +
-      '<div class="fila-btn">' + (cel ? botonEnviar(p, k) : '<span class="hint">Sin celular válido.</span>') +
-      '<button class="btn sec sm" data-a="avisado" data-id="' + p.id + '" data-k="' + k + '">Le avisé en persona</button>' +
-      (md.paso ? '<button class="lk" data-a="elegirPaso" data-k="">Cancelar</button>'
-               : '<button class="lk" data-a="omitir" data-id="' + p.id + '" data-k="' + k + '">Omitir</button>') + "</div></div>";
-  } else {
-    var px = proximoAviso(p);
-    h += '<p class="hint" style="margin:8px 0 0">' + (p.estado === "en_curso" || p.estado === "logro" ? "Al día: hoy no le toca mensaje." : "Sin mensajes pendientes.") +
-      (px ? " Si no viene, el " + esc(fLarga(px.f)) + " le toca «" + esc(nombrePaso(px.k)) + "»." : "") + "</p>";
-  }
-  h += md.otros
-    ? '<div class="chips chico mt">' + PASOS.map(function (x) {
-        return '<button class="chip' + (md.paso === x.k ? " on" : "") + '" data-a="elegirPaso" data-k="' + x.k + '">' + esc(x.t) + "</button>";
-      }).join("") + "</div>"
-    : '<div class="fila-btn"><button class="lk" data-a="verOtros">Mandar otro mensaje</button></div>';
-  var hist = (p.mensajes || []).slice().reverse();
-  if (hist.length) h += '<ul class="hist">' + hist.map(function (m) {
-    return "<li><span>" + esc(nombrePaso(m.paso) + " · " + fCorta(m.en) + " · " + modoTxt(m.modo)) + "</span>" +
-      (m.tmp ? "" : '<button class="lk" data-a="anularEnvio" data-m="' + m.id + '">deshacer</button>') + "</li>";
-  }).join("") + "</ul>";
-  return h + "</section>";
 }
 function listaClasesPersona(p) {
   if (!p.asistencias || !p.asistencias.length) return "";
@@ -1309,123 +1047,6 @@ function bloqueAgregarClase(p, ed) {
   h += '<input class="in mt" id="eTemaClase" placeholder="Tema (opcional)" value="' + esc(md.temaClase || "") + '" autocomplete="off">';
   h += '<div class="fila-btn"><button class="btn sm" data-a="sumarFecha">Agregar</button><button class="lk" data-a="editar" data-e="">Listo</button></div>';
   return h + "</div>";
-}
-/* Editor de la secuencia: cada paso con su versión de tú y de usted. Vacío = vuelve al original. */
-function muestraPersona() {
-  var p = S.d.inscritos.filter(function (x) { return x.estado === "en_curso"; })[0];
-  return p || { nombre: "María Pérez", validas: 2, vence: sumarDias(hoy(), 15), trato: null };
-}
-function chipsTrato(accion, actual) {
-  return ["tu", "usted"].map(function (t) {
-    return '<button class="chip' + (actual === t ? " on" : "") + '" data-a="' + accion + '" data-t="' + t + '">' + (t === "tu" ? "Tú" : "Usted") + "</button>";
-  }).join("");
-}
-function modalMensajes() {
-  var md = S.modal;
-  var h = cabModal("Mensajes de seguimiento", "Nivel Cero") + '<div class="mbody">';
-  h += '<p class="hint" style="margin-top:0">Cada mensaje tiene versión de tú y de usted. A cada persona le llega con la que elijas en su ficha; si no eliges, con la de por defecto.</p>';
-  h += '<span class="lbl">Trato por defecto</span><div class="chips">' + chipsTrato("tratoDefecto", cfg().trato || "usted") + "</div>";
-  GRUPOS.forEach(function (g) {
-    h += '<h3 class="sec-t">' + esc(g[1]) + "</h3>";
-    PASOS.forEach(function (x) { if (x.g === g[0]) h += md.abierto === x.k ? editorPaso(x) : filaPaso(x); });
-  });
-  h += '<p class="hint mt marcas">Marcadores: ' + MARCAS.map(function (m) { return "<code>{" + m[0] + "}</code> " + esc(m[1]); }).join(" · ") + ".</p>";
-  return h + "</div>";
-}
-function filaPaso(x) {
-  var pl = plantilla(x.k);
-  return '<div class="paso"><div class="paso-cab"><b>' + esc(x.t) + "</b>" + (pl.editado ? ' <span class="tag">editado</span>' : "") +
-    (pl.activo ? "" : ' <span class="tag gris">apagado</span>') + '<button class="lk" data-a="abrirPaso" data-k="' + x.k + '">Editar</button></div>' +
-    '<span class="hint">' + esc(x.cuando) + "</span></div>";
-}
-function editorPaso(x) {
-  var md = S.modal, b = md.borrador, ver = md.ver, mu = muestraPersona(), pl = plantilla(x.k);
-  var h = '<div class="paso abierto"><div class="paso-cab"><b>' + esc(x.t) + '</b></div><span class="hint">' + esc(x.cuando) + "</span>";
-  h += '<div class="chips mt">' + chipsTrato("verTrato", ver) + "</div>";
-  h += '<textarea class="in mt" id="mTexto" rows="6" aria-label="Texto del mensaje">' + esc(b[ver]) + "</textarea>";
-  h += '<div class="chips chico mt">' + MARCAS.slice(0, 6).map(function (m) {
-    return '<button type="button" class="chip mk" data-a="insertar" data-m="{' + m[0] + '}">{' + m[0] + "}</button>";
-  }).join("") + "</div>";
-  h += '<span class="lbl mt">Así le llegaría a ' + esc(pila(mu.nombre)) + '</span><p class="msj-texto" id="mPrev">' + esc(llenar(b[ver], mu, ver)) + "</p>";
-  h += '<label class="chk"><input type="checkbox" id="mActivo"' + (b.activo ? " checked" : "") + "> Activo (si lo apagas, este paso no se propone)</label>";
-  h += '<div class="fila-btn"><button class="btn sm" data-a="guardarPaso"' + (S.ocupado ? " disabled" : "") + ">Guardar</button>" +
-    (pl.editado ? '<button class="btn sec sm" data-a="restaurarPaso">Volver al original</button>' : "") +
-    '<button class="lk" data-a="cerrarPaso">Cancelar</button></div>';
-  return h + "</div>";
-}
-function guardarPlantilla(k, tu, usted, activo, msg) {
-  if (S.ocupado) return;
-  S.ocupado = true;
-  rpc("n0_plantilla_guardar", { p_token: S.token, p_clave: k, p_tu: tu, p_usted: usted, p_activo: activo }).then(function (l) {
-    S.ocupado = false; S.d.plantillas = l;
-    if (S.modal && S.modal.tipo === "mensajes") { S.modal.abierto = null; refrescarModal(); }
-    render(); aviso(msg, "ok");
-  }).catch(function (e) { S.ocupado = false; if (S.token) aviso(bonito(e.message), "mal"); });
-}
-/* Anotar el envío. Va con keepalive para que llegue aunque se abra WhatsApp; si el navegador no lo acepta
-   o falla la red, se reintenta sin él, y si tampoco, queda en este celular y se manda al volver a la página. */
-var LS_ENVIOS = "n0-envios";
-function enviosPend() { try { return JSON.parse(lsGet(LS_ENVIOS) || "[]") || []; } catch (e) { return []; } }
-function guardarEnviosPend(l) { lsSet(LS_ENVIOS, l.length ? JSON.stringify(l) : null); }
-function anotarEnvio(x) {
-  var args = { p_token: S.token, p_inscrito: x.pid, p_paso: x.k, p_modo: x.modo, p_texto: x.texto };
-  return rpc("n0_mensaje_registrar", args, true).catch(function (e) {
-    if (e instanceof TypeError) return rpc("n0_mensaje_registrar", args);
-    throw e;
-  });
-}
-function ponerEnviosPend() {
-  enviosPend().forEach(function (x) {
-    var p = IDX.ins[x.pid];
-    if (p && !yaMandado(p, x.k)) p.mensajes = (p.mensajes || []).concat([{ id: x.t, paso: x.k, modo: x.modo, en: x.en || hoy(), tmp: true }]);
-  });
-}
-function reintentarEnvios() {
-  var l = enviosPend();
-  if (!l.length || !S.token || !S.d) return;
-  guardarEnviosPend([]);
-  l.forEach(function (x) {
-    anotarEnvio(x).then(function (fila) { parchar(fila); render(); }).catch(function (e) {
-      if (e instanceof TypeError) guardarEnviosPend(enviosPend().concat([x]));
-      else if (S.token) aviso("No se anotó un mensaje: " + bonito(e.message), "mal");
-    });
-  });
-}
-/* Anota el envío. El enlace de WhatsApp se abre igual; la lista se repinta un instante después. */
-function registrarEnvio(pid, k, modo) {
-  var p = IDX.ins[pid];
-  if (!p || !PASO[k]) return;
-  var texto = modo === "omitido" ? null : textoPaso(k, p);
-  var tmp = { id: "tmp" + Date.now(), paso: k, modo: modo, en: hoy(), tmp: true };
-  var x = { pid: pid, k: k, modo: modo, texto: texto, t: tmp.id, en: tmp.en };
-  p.mensajes = (p.mensajes || []).concat([tmp]);
-  anotarEnvio(x).then(function (fila) {
-    parchar(fila); repintarMensajes(pid);
-  }).catch(function (e) {
-    if (e instanceof TypeError) {                       // sin conexión: queda guardado y se manda luego
-      guardarEnviosPend(enviosPend().concat([x]));
-      aviso("Sin conexión: se anotará cuando vuelva la señal", "mal");
-      return;
-    }
-    var q = IDX.ins[pid];
-    if (q) q.mensajes = (q.mensajes || []).filter(function (m) { return m !== tmp; });
-    repintarMensajes(pid);
-    if (S.token) aviso("No se anotó el mensaje: " + bonito(e.message), "mal");
-  });
-  setTimeout(function () { repintarMensajes(pid); }, 400);
-  aviso(modo === "omitido" ? "Omitido: " + nombrePaso(k) : modo === "aviso" ? "Anotado: le avisaste en persona" : "Anotado como enviado", "ok");
-}
-function repintarMensajes(pid) {
-  if (S.modal && S.modal.tipo === "persona" && S.modal.id === pid) { S.modal.paso = null; S.modal.otros = false; refrescarModal(); }
-  render();
-}
-function anularEnvio(mid) {
-  if (!mid || /^tmp/.test(mid) || S.ocupado) return;
-  S.ocupado = true;
-  rpc("n0_mensaje_anular", { p_token: S.token, p_id: mid }).then(function (fila) {
-    S.ocupado = false; parchar(fila); repintarMensajes(fila.id);
-    aviso("Deshecho: vuelve a quedar pendiente", "ok");
-  }).catch(function (e) { S.ocupado = false; if (S.token) aviso(bonito(e.message), "mal"); });
 }
 function bloqueBotella(p, ed) {
   var b = estadoBotella(p), h = "";
@@ -1677,7 +1298,7 @@ var ACC = {
     });
   },
   marcar: function (el) { marcar(el.getAttribute("data-id")); },
-  filtro: function (el) { S.filtro = el.getAttribute("data-f"); S.filtroElegido = true; render(); },
+  filtro: function (el) { S.filtro = el.getAttribute("data-f"); render(); },
   persona: function (el) { abrirModal({ tipo: "persona", id: el.getAttribute("data-id") }); },
   cerrarModal: cerrarModal,
   fondo: cerrarModal,
@@ -1752,60 +1373,7 @@ var ACC = {
   quitarClase: function (el) { quitarAsistencia(el.getAttribute("data-c")); },
   eyAnio: function (el) { S.eyAnio = el.getAttribute("data-y"); render(); },
   eyNivel: function (el) { var n = +el.getAttribute("data-n"); S.eyNivel = S.eyNivel === n ? 0 : n; render(); },
-  eyCruce: function (el) { var g = el.getAttribute("data-g"); S.eyCruce = S.eyCruce === g ? null : g; render(); },
-  avisado: function (el) { registrarEnvio(el.getAttribute("data-id"), el.getAttribute("data-k"), "aviso"); },
-  omitir: function (el) { registrarEnvio(el.getAttribute("data-id"), el.getAttribute("data-k"), "omitido"); },
-  anularEnvio: function (el) { anularEnvio(el.getAttribute("data-m")); },
-  tratoPersona: function (el) {
-    var t = el.getAttribute("data-t"), p = IDX.ins[S.modal.id];
-    if (!p || p.trato === t) return;
-    guardarEstado({ trato: t }, "Le escribirás de " + (t === "tu" ? "tú" : "usted"));
-  },
-  elegirPaso: function (el) { var k = el.getAttribute("data-k"); S.modal.paso = k || null; S.modal.otros = false; refrescarModal(); },
-  verOtros: function () { S.modal.otros = !S.modal.otros; refrescarModal(); },
-  editarMensajes: function () { abrirModal({ tipo: "mensajes", abierto: null }); },
-  tratoDefecto: function (el) {
-    var t = el.getAttribute("data-t");
-    if (S.ocupado || t === cfg().trato) return;
-    S.ocupado = true;
-    rpc("n0_config_guardar", { p_token: S.token, p_cambios: { trato: t } }).then(function (c) {
-      S.ocupado = false; S.d.config = c; refrescarModal(); render();
-      aviso("Por defecto: " + (t === "tu" ? "tú" : "usted"), "ok");
-    }).catch(function (e) { S.ocupado = false; if (S.token) aviso(bonito(e.message), "mal"); });
-  },
-  abrirPaso: function (el) {
-    var k = el.getAttribute("data-k"), pl = plantilla(k);
-    S.modal.abierto = k; S.modal.ver = cfg().trato || "usted"; S.modal.cursor = null;
-    S.modal.borrador = { tu: pl.tu, usted: pl.usted, activo: pl.activo };
-    refrescarModal();
-    var ed = document.querySelector(".paso.abierto");
-    if (ed && ed.scrollIntoView) ed.scrollIntoView({ block: "nearest" });
-  },
-  verTrato: function (el) { S.modal.ver = el.getAttribute("data-t"); S.modal.cursor = null; refrescarModal(); },
-  insertar: function (el) {
-    var ta = document.getElementById("mTexto");
-    if (!ta) return;
-    var m = el.getAttribute("data-m"), c = S.modal.cursor;
-    var a = typeof c === "number" ? c : ta.value.length, antes = ta.value.slice(0, a);
-    var ins = (antes && !/[\s(¡¿]$/.test(antes) ? " " : "") + m;
-    ta.value = antes + ins + ta.value.slice(a);
-    S.modal.cursor = a + ins.length;
-    ta.dispatchEvent(new Event("input", { bubbles: true }));
-  },
-  cerrarPaso: function () { S.modal.abierto = null; refrescarModal(); },
-  guardarPaso: function () {
-    var md = S.modal, x = PASO[md.abierto], b = md.borrador;
-    var ta = document.getElementById("mTexto"); if (ta) b[md.ver] = ta.value;
-    var ck = document.getElementById("mActivo"); if (ck) b.activo = ck.checked;
-    var malos = [];
-    [b.tu, b.usted].forEach(function (t) {
-      (String(t || "").match(/\{[^}]*\}/g) || []).forEach(function (m) { if (!MARCA[claveMarca(m.slice(1, -1))] && malos.indexOf(m) < 0) malos.push(m); });
-    });
-    if (malos.length) return aviso("Revisa " + malos.join(" ") + ": no es un marcador", "mal");
-    var tu = String(b.tu || "").trim(), us = String(b.usted || "").trim();
-    guardarPlantilla(x.k, tu === x.tu ? null : tu, us === x.usted ? null : us, b.activo, "Mensaje guardado");
-  },
-  restaurarPaso: function () { var md = S.modal; guardarPlantilla(md.abierto, null, null, md.borrador.activo, "Volvió al mensaje original"); }
+  eyCruce: function (el) { var g = el.getAttribute("data-g"); S.eyCruce = S.eyCruce === g ? null : g; render(); }
 };
 
 /* Marca la clase en la ficha. Si se escribió un tema y esa clase no tenía, se lo pone. */
@@ -1851,8 +1419,6 @@ function quitarAsistencia(claseId) {
 
 /* ---------------------------------------------------------- eventos */
 document.addEventListener("click", function (e) {
-  var env = e.target.closest ? e.target.closest("a[data-envio]") : null;
-  if (env) { registrarEnvio(env.getAttribute("data-id"), env.getAttribute("data-envio"), "whatsapp"); return; }
   if (e.target.closest && e.target.closest("a[href]")) return;          // los enlaces funcionan como enlaces
   var el = e.target.closest ? e.target.closest("[data-a]") : null;
   if (!el) return;
@@ -1876,15 +1442,7 @@ document.addEventListener("input", function (e) {
     S.buscaIns = e.target.value;
     var box2 = document.getElementById("lista-ins");
     if (box2) box2.innerHTML = listaInscritos();
-  } else if (e.target.id === "mTexto" && S.modal && S.modal.tipo === "mensajes" && S.modal.borrador) {
-    S.modal.borrador[S.modal.ver] = e.target.value;
-    S.modal.cursor = e.target.selectionStart;
-    var pv = document.getElementById("mPrev");
-    if (pv) pv.textContent = llenar(e.target.value, muestraPersona(), S.modal.ver);
   }
-});
-document.addEventListener("focusout", function (e) {
-  if (e.target.id === "mTexto" && S.modal && S.modal.tipo === "mensajes") S.modal.cursor = e.target.selectionStart;
 });
 document.addEventListener("change", function (e) {
   var k = e.target.getAttribute && e.target.getAttribute("data-in");
@@ -1912,10 +1470,8 @@ document.addEventListener("submit", function (e) {
   }
 });
 var ocultoDesde = 0;
-window.addEventListener("online", function () { reintentarEnvios(); });
 document.addEventListener("visibilitychange", function () {
   if (document.hidden) { ocultoDesde = Date.now(); return; }
-  reintentarEnvios();
   if (S.token && S.d && !S.modal && ocultoDesde && Date.now() - ocultoDesde > 60000) cargar(true);
 });
 
