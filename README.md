@@ -56,7 +56,12 @@ edge `traspaso`; si falla, va el enlace simple.
 - Niveles leídos de los premios (`eya_premios.items`): I = utensilio 1.5L +
   botella, II = Multi Cooker (antes cocina de inducción), III = Nutrex Press u
   Olla a Presión 8L desde el programa del 3 de setiembre (antes Juego Chef I),
-  Miami = viaje. El detalle existe desde el PB10 de 2026.
+  Miami = viaje; en el programa de inicios de 2026 el III también fue el Filtro de
+  Agua RWF-228. El detalle de premios existe desde el PB01 de 2026; antes solo
+  está el histórico de ganadores.
+- En la pestaña Empiece Ya, «actualizados al …» abre el estado de la carga
+  (`eya_estado_carga()`): qué cierres están oficiales, preliminares, solo con
+  ganadores o faltan.
 
 ## Cómo está hecho
 

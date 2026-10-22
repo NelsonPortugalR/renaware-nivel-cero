@@ -110,6 +110,20 @@ input[type=date].in,input[type=time].in{min-height:46px}
 .cruce .ok b{color:var(--verde)}
 .cruce .mal b{color:var(--ambar)}
 .clases-p li{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+/* estado de la carga del Empiece Ya */
+.lk.carga{font-size:inherit;line-height:inherit}
+.tag.fal{background:var(--alertaS);color:var(--alerta)}
+.tag.pre{background:var(--ambarS);color:var(--ambar)}
+.cg{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:4px;margin-top:6px}
+.cgc{padding:5px 6px;font:11px/1.25 var(--mono);border:1px solid transparent}
+.cgc b{display:block;font-size:12px}
+.cgc.of{background:var(--verdeS);color:var(--verde)}
+.cgc.pre{background:var(--ambarS);color:#7A4A05}
+.cgc.his{background:var(--soft);color:var(--ink40);border-color:var(--rule)}
+.cgc.fal{background:#fff;color:var(--alerta);border:1px dashed var(--alerta)}
+.aviso.fal{background:var(--alertaS);border-left-color:var(--alerta);color:#6B1F1F}
+.aviso.gris{background:var(--soft);border-left-color:var(--ink40);color:var(--ink70)}
+.aviso.ok{background:var(--verdeS);border-left-color:var(--verde);color:var(--verde)}
 .clases-p li>span{min-width:0}
 .clases-p li>button{flex:0 0 auto;white-space:nowrap}
 .caja-edit{border:1px solid var(--rule);background:var(--soft);padding:10px;margin-top:10px}
@@ -883,13 +897,14 @@ function vistaEY() {
   });
   var vis = S.eyNivel ? sel.filter(function (w) { return (w.niveles || []).some(function (x) { return x.n === S.eyNivel; }); }) : sel;
   var eyH = S.d.ey_hasta;
-  var html = '<p class="regla">Ganadores del Empiece Ya de tu equipo WV08' + (eyH ? ", cargados hasta el PB" + eyH.pb + " (" + esc(fCorta(eyH.fecha)) + ")" + (eyH.estado === "Preliminar" ? " preliminar" : "") : "") + ".</p>";
+  var html = '<p class="regla">Ganadores del Empiece Ya de tu equipo WV08' + (eyH ? ", " + botonCarga() : "") + ".</p>";
   html += '<div class="chips">' + ys.map(function (y) {
     return '<button class="chip' + (S.eyAnio === y ? " on" : "") + '" data-a="eyAnio" data-y="' + y + '">' + y + "<span>" + anios[y] + "</span></button>";
   }).join("") + '<button class="chip' + (S.eyAnio === "todos" ? " on" : "") + '" data-a="eyAnio" data-y="todos">Todos<span>' + lista.length + "</span></button></div>";
   html += '<div class="niveles">' + tileNivel(0, "Ganadores", sel.length) + tileNivel(1, "Nivel I", cn[1]) + tileNivel(2, "Nivel II", cn[2]) +
     tileNivel(3, "Nivel III", cn[3]) + tileNivel(4, "Miami", cn[4]) + "</div>";
-  if (sinDetalle) html += '<p class="hint">' + plural(sinDetalle, "ganador no tiene", "ganadores no tienen") + " el detalle del premio (se carga desde el PB10 de 2026), así que su nivel no se conoce.</p>";
+  if (sinDetalle) html += '<p class="hint">' + plural(sinDetalle, "ganador no tiene", "ganadores no tienen") + " el detalle del premio" +
+    (detalleDesde() ? " (existe desde el " + esc(detalleDesde()) + ")" : "") + ", así que su nivel no se conoce.</p>";
   var c = { con: 0, sin: 0, fuera: 0 };
   vis.forEach(function (w) { c[cruceN0(w).grupo]++; });
   if (S.eyCruce) vis = vis.filter(function (w) { return cruceN0(w).grupo === S.eyCruce; });
@@ -909,6 +924,61 @@ function vistaEY() {
 }
 function celdaCruce(g, cls, n, t) {
   return '<button class="cz ' + cls + (S.eyCruce === g ? " on" : "") + '" data-a="eyCruce" data-g="' + g + '"><b>' + n + "</b><span>" + t + "</span></button>";
+}
+/* ----- estado de la carga del Empiece Ya: qué cierres están oficiales, preliminares, solo con ganadores o faltan */
+var CARGA_TXT = { Oficial: "Oficial", Preliminar: "Preliminar", Historico: "Solo ganadores", Falta: "Falta" };
+var CARGA_CLS = { Oficial: "of", Preliminar: "pre", Historico: "his", Falta: "fal" };
+function cargaPeriodos() { return (S.d.ey_carga && S.d.ey_carga.periodos) || []; }
+function detalleDesde() {
+  var l = cargaPeriodos().filter(function (x) { return x.premios > 0; });
+  var x = l[l.length - 1];
+  return x ? "PB" + x.pb + " de " + x.anio : "";
+}
+function botonCarga() {
+  var eyH = S.d.ey_hasta, P = cargaPeriodos();
+  var falta = P.filter(function (x) { return x.estado === "Falta"; }).length, pre = P.filter(function (x) { return x.estado === "Preliminar"; }).length;
+  return '<button class="lk carga" data-a="verCarga">actualizados al PB' + eyH.pb + " (" + esc(fCorta(eyH.fecha)) + ")" + (eyH.estado === "Preliminar" ? " preliminar" : "") + "</button>" +
+    (falta ? ' <span class="tag fal">' + falta + " por cargar</span>" : "") + (pre ? ' <span class="tag pre">' + plural(pre, "preliminar", "preliminares") + "</span>" : "");
+}
+function listaPbs(l) {
+  var porAnio = {};
+  l.forEach(function (x) { (porAnio[x.anio] = porAnio[x.anio] || []).push(x.pb); });
+  return Object.keys(porAnio).sort().map(function (y) {
+    var pbs = porAnio[y].sort(function (a, b) { return a - b; }).map(function (n) { return "PB" + n; });
+    return (pbs.length > 1 ? pbs.slice(0, -1).join(", ") + " y " + pbs[pbs.length - 1] : pbs[0]) + " de " + y;
+  }).join("; ");
+}
+function modalCarga() {
+  var c = S.d.ey_carga || { periodos: [] }, P = c.periodos, u = c.ultimo;
+  var falta = P.filter(function (x) { return x.estado === "Falta"; }), pre = P.filter(function (x) { return x.estado === "Preliminar"; }),
+      his = P.filter(function (x) { return x.estado === "Historico"; });
+  var h = cabModal("Estado de la carga", "Empiece Ya") + '<div class="mbody">';
+  h += '<p class="hint" style="margin-top:0">Actualizado al ' + (u ? "PB" + u.pb + " de " + u.anio + " (" + esc(fLarga(u.fecha)) + ")" + (u.estado === "Preliminar" ? ", preliminar" : "") : "—") +
+    ". Último cierre: " + esc(c.ultimo_cierre ? fLarga(c.ultimo_cierre) : "—") + ".</p>";
+  if (falta.length) h += '<div class="aviso fal chico"><b>Falta cargar:</b> ' + esc(listaPbs(falta)) + ".</div>";
+  if (pre.length) h += '<div class="aviso chico"><b>Preliminares</b> (falta el oficial): ' + esc(listaPbs(pre)) + ".</div>";
+  if (his.length) {
+    var tot = {}, n = {};
+    P.forEach(function (x) { tot[x.anio] = (tot[x.anio] || 0) + 1; });
+    his.forEach(function (x) { n[x.anio] = (n[x.anio] || 0) + 1; });
+    h += '<div class="aviso gris chico"><b>Solo ganadores, sin detalle de premios:</b> ' + esc(Object.keys(n).sort().map(function (y) {
+      return n[y] === tot[y] ? y + " completo" : listaPbs(his.filter(function (x) { return String(x.anio) === y; }));
+    }).join("; ")) + ".</div>";
+  }
+  if (!falta.length && !pre.length) h += '<div class="aviso ok chico">Todo cargado y oficial hasta el último cierre.</div>';
+  h += '<div class="chips chico mt">' + ["Oficial", "Preliminar", "Historico", "Falta"].map(function (e) {
+    return '<span class="cgc ' + CARGA_CLS[e] + '" style="padding:3px 8px">' + CARGA_TXT[e] + "</span>";
+  }).join("") + "</div>";
+  var porAnio = {};
+  P.forEach(function (x) { (porAnio[x.anio] = porAnio[x.anio] || []).push(x); });
+  Object.keys(porAnio).sort().reverse().forEach(function (y) {
+    var l = porAnio[y].slice().sort(function (a, b) { return a.fecha.localeCompare(b.fecha); });
+    h += '<h3 class="sec-t">' + y + '</h3><div class="cg">' + l.map(function (x) {
+      return '<div class="cgc ' + CARGA_CLS[x.estado] + '" title="' + esc("PB" + x.pb + " · " + fCorta(x.fecha) + " · " + CARGA_TXT[x.estado] +
+        (x.premios ? " · " + x.premios + " premios" : "") + (x.ganadores ? " · " + x.ganadores + " ganadores nuevos" : "")) + '"><b>PB' + x.pb + "</b>" + esc(fCorta(x.fecha)) + "</div>";
+    }).join("") + "</div>";
+  });
+  return h + "</div>";
 }
 function tileNivel(n, t, v) {
   return '<button class="tnv' + (S.eyNivel === n ? " on" : "") + '" data-a="eyNivel" data-n="' + n + '"><b>' + v + "</b><span>" + t + "</span></button>";
@@ -959,7 +1029,7 @@ function renderModal() {
   var capa = document.getElementById("capa");
   if (!S.modal || !S.d) { capa.innerHTML = ""; document.body.classList.remove("con-modal"); return; }
   var t = S.modal.tipo;
-  var cont = t === "persona" ? modalPersona() : t === "clase" ? modalClase() : t === "manual" ? modalManual() : modalConfirmar();
+  var cont = t === "persona" ? modalPersona() : t === "clase" ? modalClase() : t === "manual" ? modalManual() : t === "carga" ? modalCarga() : modalConfirmar();
   capa.innerHTML = '<div class="ov" data-a="fondo"><div class="modal" role="dialog" aria-modal="true">' + cont + "</div></div>";
   document.body.classList.add("con-modal");
 }
@@ -1389,7 +1459,8 @@ var ACC = {
   quitarClase: function (el) { quitarAsistencia(el.getAttribute("data-c")); },
   eyAnio: function (el) { S.eyAnio = el.getAttribute("data-y"); render(); },
   eyNivel: function (el) { var n = +el.getAttribute("data-n"); S.eyNivel = S.eyNivel === n ? 0 : n; render(); },
-  eyCruce: function (el) { var g = el.getAttribute("data-g"); S.eyCruce = S.eyCruce === g ? null : g; render(); }
+  eyCruce: function (el) { var g = el.getAttribute("data-g"); S.eyCruce = S.eyCruce === g ? null : g; render(); },
+  verCarga: function () { abrirModal({ tipo: "carga" }); }
 };
 
 /* Marca la clase en la ficha. Si se escribió un tema y esa clase no tenía, se lo pone. */

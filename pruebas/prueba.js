@@ -64,6 +64,7 @@ function estadoInicial() {
   ];
   const cargados = { "2025-11-26": { anio: 2025, pb: 24, estado: "Historico" } };
   for (let i = 9; i <= 19; i++) cargados[addDays(pIni(i), 13)] = { anio: 2026, pb: i + 1, estado: "Oficial" };
+  for (let i = -2; i <= 8; i++) { const c = addDays(pIni(i), 13); cargados[c] = { anio: +c.slice(0, 4), pb: ((i % 26) + 26) % 26 + 1, estado: "Historico" }; }
   return { cfg, ins, estado, clases, asis, ganadores, cargados, mensajes: [], token: "tok-valido", llamadas: [] };
 }
 
@@ -110,6 +111,17 @@ function servidor(st) {
   }
   function n(k) { return st.asis.filter(a => a.clase === k.id && a.presente).length; }
   function claseOut(k) { return { id: k.id, fecha: k.fecha, hora: k.hora, tema: k.tema, tipo: k.tipo, n: n(k) }; }
+  // como eya_estado_carga(): cada cierre hasta el último, con su estado o "Falta"
+  function cargaEY() {
+    const fechas = Object.keys(st.cargados).sort(), hasta = addDays(pIni(pIdx(HOY) - 1), 13), periodos = [];
+    for (let f = fechas[0]; f <= hasta; f = addDays(f, 14)) {
+      const c = st.cargados[f], i = pIdx(f);
+      periodos.unshift({ anio: c ? c.anio : +f.slice(0, 4), pb: c ? c.pb : ((i % 26) + 26) % 26 + 1, fecha: f, estado: c ? c.estado : "Falta",
+        premios: c && c.estado !== "Historico" ? 10 : 0, ganadores: st.ganadores.filter(g => g.fecha === f).length });
+    }
+    const ult = fechas[fechas.length - 1];
+    return { hoy: HOY, ultimo_cierre: hasta, ultimo: Object.assign({ fecha: ult }, st.cargados[ult]), periodos };
+  }
   function datos() {
     const vivas = st.clases.filter(c => !c.borrada);
     const ult = Object.keys(st.cargados).sort().pop();
@@ -117,6 +129,7 @@ function servidor(st) {
       hoy: HOY, pb_hoy: pbObj(st, pIdx(HOY)), config: st.cfg,
       primera_clase: vivas.map(c => c.fecha).sort()[0] || null,
       ey_hasta: ult ? Object.assign({ fecha: ult }, st.cargados[ult]) : null,
+      ey_carga: cargaEY(),
       ey_wv08: st.ganadores.slice().sort((a, b) => b.fecha.localeCompare(a.fecha) || a.nombre.localeCompare(b.nombre)),
       clases: vivas.slice().sort((a, b) => (b.fecha + b.hora).localeCompare(a.fecha + a.hora)).map(claseOut),
       inscritos: st.ins.filter(p => !p.borrado).map(fila).sort((a, b) => b.fecha_inscripcion.localeCompare(a.fecha_inscripcion))
@@ -477,7 +490,16 @@ function bien(nombre, cond, extra) {
   await page.click('button.tab[data-tab="ey"]');
   await espera(200);
   let eyt = await page.locator("main").innerText();
-  bien("pestaña Empiece Ya de WV08", /Ganadores del Empiece Ya de tu equipo WV08, cargados hasta el PB20 \(30 set\)/.test(eyt), eyt.slice(0, 200));
+  bien("pestaña Empiece Ya de WV08", /Ganadores del Empiece Ya de tu equipo WV08, actualizados al PB20 \(30 set\)/.test(eyt) && /1 por cargar/i.test(eyt), eyt.slice(0, 200));
+  await page.click('button[data-a="verCarga"]');
+  await espera(200);
+  const carga = await page.locator(".modal").innerText();
+  bien("actualizados al abre el estado de la carga", /Estado de la carga/.test(carga) && /Falta cargar: PB21 de 2026\./.test(carga) &&
+    /Solo ganadores, sin detalle de premios: 2025 completo; PB1, PB2, PB3, PB4, PB5, PB6, PB7, PB8 y PB9 de 2026\./.test(carga), carga.slice(0, 500));
+  bien("grilla de cierres por año", (await page.locator(".modal .cgc.fal").count()) === 1 + 1 && (await page.locator(".modal .cgc.of").count()) === 11 + 1, await page.locator(".modal .cgc").count());
+  await page.screenshot({ path: "/tmp/n0-13-carga.png", fullPage: true });
+  await page.click('.x[aria-label="Cerrar"]');
+  await espera(100);
   const anios = await page.locator("main .chips").first().innerText();
   bien("años con su cuenta", /2026\s*4/.test(anios) && /2025\s*1/.test(anios) && /Todos\s*5/i.test(anios), anios.replace(/\n/g, " "));
   const tiles = await page.locator(".niveles").innerText();
@@ -510,7 +532,7 @@ function bien(nombre, cond, extra) {
   await page.click('main .chip[data-y="2025"]');
   await espera(150);
   eyt = await page.locator("main").innerText();
-  bien("año anterior sin detalle del premio", (await page.locator(".fila.gan").count()) === 1 && /Nivel sin detalle/.test(eyt) && /1 ganador no tiene el detalle del premio \(se carga desde el PB10 de 2026\)/.test(eyt) && /PB24 de 2025/i.test(eyt), eyt.slice(0, 700));
+  bien("año anterior sin detalle del premio", (await page.locator(".fila.gan").count()) === 1 && /Nivel sin detalle/.test(eyt) && /1 ganador no tiene el detalle del premio \(existe desde el PB10 de 2026\)/.test(eyt) && /PB24 de 2025/i.test(eyt), eyt.slice(0, 700));
   let plazo = await page.locator("section.bloque").last().innerText();
   bien("tus inscritos y su Empiece Ya", /2\s*ganaron/.test(plazo) && /4\s*en plazo/.test(plazo) && /1\s*esperando resultados/.test(plazo) && /1\s*no ganaron/.test(plazo), plazo.replace(/\n/g, " "));
   bien("dice qué resultados faltan", /Faltan los resultados oficiales del PB21/.test(plazo), plazo);
@@ -541,7 +563,7 @@ function bien(nombre, cond, extra) {
   await espera(150);
   eyt = await page.locator("main").innerText();
   cruce = await page.locator(".cruce").first().innerText();
-  bien("al cargar el PB21 se actualiza solo", /cargados hasta el PB21/.test(eyt) && /1\s*ganaron sin completar las 5 clases/.test(cruce) && !/Faltan los resultados/.test(eyt), cruce.replace(/\n/g, " "));
+  bien("al cargar el PB21 se actualiza solo", /actualizados al PB21/.test(eyt) && !/por cargar/i.test(eyt) && /1\s*ganaron sin completar las 5 clases/.test(cruce) && !/Faltan los resultados/.test(eyt), cruce.replace(/\n/g, " "));
   bien("muestra a quien ganó sin completar el Nivel Cero", /No completó el Nivel Cero · 2 de 5 clases/.test(eyt));
   plazo = await page.locator("section.bloque").last().innerText();
   bien("cuenta los resultados nuevos", /3\s*ganaron/.test(plazo) && /0\s*esperando resultados/.test(plazo), plazo.replace(/\n/g, " "));
