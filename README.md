@@ -23,7 +23,10 @@ Los **mensajes de WhatsApp** a los nuevos (bienvenida y seguimiento de sus 30
 días) ya no se mandan desde aquí: van en
 [Bienvenida](https://renaware-bienvenida.pages.dev), que lee estas mismas
 clases. La ficha tiene *Abrir en Bienvenida* (`#a=<id>`) y en Botellas,
-*Avisar* abre ahí el mensaje para que recoja su botella (`#a=<id>&paso=recoger`).
+*Avisar* abre ahí el mensaje para que recoja su botella (`#a=<id>&paso=recoger`;
+la fila dice si ya se le avisó). Se abre ya con sesión: `traspaso_crear_admin`
+da un código de un solo uso (3 minutos) que Bienvenida canjea en la función
+edge `traspaso`; si falla, va el enlace simple.
 - **Empiece Ya**: ganadores de WV08 por año y por nivel (I, II, III, Miami),
   agrupados por período, cruzados con el Nivel Cero: quién lo hizo (y su
   botella), quién ganó sin completar las 5 clases y quién es de antes o no
@@ -66,7 +69,8 @@ la sesión de admin (`admin_login`, la misma clave del panel).
   `n0_mensajes` y `n0_plantillas` (y el trato de `n0_estado` y `n0_config`)
   guardan los mensajes; los usa Bienvenida por sus funciones `wa_bv_*`.
 - Funciones con sesión: `n0_datos`, `n0_clase_guardar`, `n0_clase_borrar`,
-  `n0_marcar`, `n0_estado_guardar`, `n0_manual_guardar`, `n0_manual_borrar`.
+  `n0_marcar`, `n0_estado_guardar`, `n0_manual_guardar`, `n0_manual_borrar`,
+  y `traspaso_crear_admin` para abrir Bienvenida.
   El cálculo vive en `n0_inscritos_json` (interna, sin permisos públicos).
 - Nada se borra de verdad: desmarcar pone `presente = false`, borrar una clase
   la marca `borrada`, borrar un inscrito a mano lo marca `borrado`.

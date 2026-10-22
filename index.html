@@ -235,7 +235,7 @@ dl.datos dd{margin:0;line-height:1.5;overflow-wrap:anywhere}
     if (!d || !d.ok) throw new Error((d && d.motivo) || 'Enlace inválido');
     if (!d.admin_token) throw new Error('Sin credencial para este módulo');
     guardar('n0-token', d.admin_token);
-    location.replace(location.pathname + location.search + location.hash);
+    location.reload();                                   // misma dirección, ya sin el código
   }).catch(function () { raiz.style.visibility = visAntes; });
 })();
 </script>
@@ -530,6 +530,21 @@ function enBienvenida(p) {
 function enlaceBienvenida(p, paso) {
   return BIENVENIDA + "/#a=" + encodeURIComponent(p.id) + (paso ? "&paso=" + paso : "");
 }
+/* Abre Bienvenida en otra pestaña ya con sesión, con un código de traspaso de un solo uso (vale 3 minutos).
+   Si no se puede, va el enlace simple: Bienvenida pedirá la clave si en ese celular nunca se entró. */
+function abrirBienvenida(id, paso) {
+  var simple = enlaceBienvenida({ id: id }, paso), w = null;
+  try { w = window.open("about:blank", "_blank"); } catch (e) { w = null; }
+  if (w) { try { w.opener = null; } catch (e) {} }
+  var ir = function (url) { if (w && !w.closed) w.location.href = url; else location.href = url; };
+  rpc("traspaso_crear_admin", { p_token: S.token, p_modulo: "bienvenida" }).then(function (cod) {
+    ir(BIENVENIDA + "/#traspaso=" + encodeURIComponent(cod) + "&" + simple.split("#")[1]);
+  }).catch(function () { ir(simple); });
+}
+function linkBienvenida(p, paso, texto, extra) {
+  return '<a class="btn sec sm" href="' + esc(enlaceBienvenida(p, paso)) + '" target="_blank" rel="noopener" data-bv="' + esc(p.id) + '"' +
+    (paso ? ' data-paso="' + esc(paso) + '"' : "") + (extra || "") + ">" + texto + "</a>";
+}
 
 /* ---------------------------------------------------------- vistas */
 function render() {
@@ -726,8 +741,9 @@ function cuerpoPersona(p, sub, extra) {
     '<span class="sub">' + esc(sub) + "</span>" + (extra || "") + "</span>";
 }
 function filaPorEntregar(p) {
-  return '<div class="fila bot">' + cuerpoPersona(p, "Logró el " + fCorta(p.logro_fecha)) +
-    '<span class="der"><a class="btn sec sm" href="' + esc(enlaceBienvenida(p, "recoger")) + '" target="_blank" rel="noopener" aria-label="Avisar a ' + esc(pila(p.nombre)) + ' que la recoja, desde Bienvenida">Avisar ↗</a>' +
+  var av = (p.mensajes || []).filter(function (m) { return m.paso === "recoger"; }).pop();
+  return '<div class="fila bot">' + cuerpoPersona(p, "Logró el " + fCorta(p.logro_fecha) + (av ? " · le avisaste el " + fCorta(av.en) : "")) +
+    '<span class="der">' + linkBienvenida(p, "recoger", "Avisar ↗", ' aria-label="Avisar a ' + esc(pila(p.nombre)) + ' que la recoja, desde Bienvenida"') +
     '<button class="btn ok sm" data-a="entregar" data-id="' + p.id + '">Entregué</button></span></div>';
 }
 function filaDescontar(p) {
@@ -1006,7 +1022,7 @@ function modalPersona() {
   if (enBienvenida(p))
     h += '<section class="msj-sec"><span class="lbl">Mensajes de WhatsApp</span>' +
       '<p class="hint">La bienvenida y el seguimiento de sus 30 días se mandan desde Bienvenida, con las clases que lleva aquí.</p>' +
-      '<div class="fila-btn"><a class="btn sec sm" href="' + esc(enlaceBienvenida(p)) + '" target="_blank" rel="noopener">Abrir en Bienvenida ↗</a></div></section>';
+      '<div class="fila-btn">' + linkBienvenida(p, null, "Abrir en Bienvenida ↗") + "</div></section>";
   h += '<label class="lbl" for="eNota">Nota</label><textarea class="in" id="eNota" rows="2" placeholder="Algo que conviene recordar">' + esc(p.nota || "") + "</textarea>" +
     '<div class="fila-btn"><button class="btn sec sm" data-a="guardarNota">Guardar nota</button></div>';
   h += '<div class="pie">';
@@ -1419,6 +1435,8 @@ function quitarAsistencia(claseId) {
 
 /* ---------------------------------------------------------- eventos */
 document.addEventListener("click", function (e) {
+  var bv = e.target.closest ? e.target.closest("a[data-bv]") : null;     // a Bienvenida, ya con sesión
+  if (bv && !e.ctrlKey && !e.metaKey && !e.shiftKey) { e.preventDefault(); abrirBienvenida(bv.getAttribute("data-bv"), bv.getAttribute("data-paso")); return; }
   if (e.target.closest && e.target.closest("a[href]")) return;          // los enlaces funcionan como enlaces
   var el = e.target.closest ? e.target.closest("[data-a]") : null;
   if (!el) return;

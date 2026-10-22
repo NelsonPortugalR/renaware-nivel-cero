@@ -193,6 +193,12 @@ function servidor(st) {
         fecha_inscripcion: d.fecha_inscripcion, codigo: (d.codigo_rw || "").replace(/\D/g, "") || null, dni: d.dni || null });
       return fila(p);
     },
+    traspaso_crear_admin(a) {
+      sesion(a);
+      if (a.p_modulo !== "bienvenida") falla("Ese módulo no se abre con este enlace.");
+      st.traspasos = (st.traspasos || 0) + 1;
+      return "aaaaaaaa-bbbb-4ccc-8ddd-00000000000" + st.traspasos;
+    },
     n0_manual_borrar(a) {
       sesion(a);
       const p = st.ins.find(x => x.id === a.p_id && x.origen === "manual" && !x.borrado);
@@ -223,6 +229,7 @@ function bien(nombre, cond, extra) {
   const nav = await pw.chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
   const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, timezoneId: "America/Lima" });
   await ctx.route("https://wa.me/**", r => r.fulfill({ status: 200, contentType: "text/html", body: "<p>WhatsApp</p>" }));
+  await ctx.route("https://renaware-bienvenida.pages.dev/**", r => r.fulfill({ status: 200, contentType: "text/html", body: "<p>Bienvenida</p>" }));
   const page = await ctx.newPage();
   await page.clock.setFixedTime(new Date("2026-10-21T10:00:00-05:00"));   // miércoles 10 a. m.: la clase de hoy es a las 4 p. m.
   const errores = [];
@@ -344,6 +351,10 @@ function bien(nombre, cond, extra) {
   bien("los mensajes se mandan desde Bienvenida", (await page.locator('.modal .msj-sec a[href="https://renaware-bienvenida.pages.dev/#a=a"]').count()) === 1 &&
     /Abrir en Bienvenida/i.test(ficha) && (await page.locator(".modal .msj-caja, .modal [data-envio], .modal [data-a=tratoPersona]").count()) === 0, ficha);
   bien("queda el enlace para abrir su chat", (await page.locator('.modal a[href="https://wa.me/51959111222"]').count()) === 1);
+  const [popBv] = await Promise.all([page.waitForEvent("popup"), page.click('.modal .msj-sec a[data-bv="a"]')]);
+  await popBv.waitForURL(/renaware-bienvenida\.pages\.dev/, { timeout: 5000 }).catch(() => {});
+  bien("abre Bienvenida ya con sesión, en su ficha", popBv.url() === "https://renaware-bienvenida.pages.dev/#traspaso=aaaaaaaa-bbbb-4ccc-8ddd-000000000001&a=a", popBv.url());
+  await popBv.close();
   await page.click("text=Entregué hoy");
   await espera(400);
   bien("entrega la botella", /Entregada el 21 oct/.test(await page.locator(".modal").innerText()));
@@ -424,6 +435,9 @@ function bien(nombre, cond, extra) {
   await espera(150);
 
   /* 7 · botellas */
+  st.mensajes.push({ id: nuevoId(), ins: "f", paso: "recoger", modo: "whatsapp", texto: null, en: "2026-10-20", anulado: false });
+  await page.click('button[data-a="recargar"]');
+  await espera(500);
   await page.click('button.tab[data-tab="botellas"]');
   await espera(200);
   const bot = await page.locator("main").innerText();
@@ -433,6 +447,11 @@ function bien(nombre, cond, extra) {
   bien("entregadas: Ana y Elena", /Entregadas\s*2/i.test(bot));
   const avisar = page.locator('.fila.bot a[href="https://renaware-bienvenida.pages.dev/#a=f&paso=recoger"]');
   bien("«Avisar» lleva a Bienvenida con el mensaje para recoger la botella", (await avisar.count()) === 1 && (await avisar.getAttribute("target")) === "_blank" && /Avisar/i.test(await avisar.innerText()));
+  bien("dice cuándo se le avisó", /Logró el 6 oct · le avisaste el 20 oct/.test(await page.locator("main").innerText()));
+  const [popAv] = await Promise.all([page.waitForEvent("popup"), avisar.click()]);
+  await popAv.waitForURL(/renaware-bienvenida\.pages\.dev/, { timeout: 5000 }).catch(() => {});
+  bien("y abre el aviso ya con sesión", popAv.url() === "https://renaware-bienvenida.pages.dev/#traspaso=aaaaaaaa-bbbb-4ccc-8ddd-000000000002&a=f&paso=recoger", popAv.url());
+  await popAv.close();
   await page.click('button[data-a="descontar"]');
   await espera(400);
   const bot2 = await page.locator("main").innerText();
