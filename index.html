@@ -277,6 +277,7 @@ var DIAS_C = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
 var MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre", "noviembre", "diciembre"];
 var MESES_C = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "set", "oct", "nov", "dic"];
 var BIENVENIDA = "https://renaware-bienvenida.pages.dev";   // los mensajes de WhatsApp a los nuevos se mandan desde ahí
+var TEST = "https://renaware-plataforma.nelson1614.workers.dev/test/";   // el Test del Nivel 0 (vista de oficina: #oficina)
 
 function lsGet(k) { try { return window.localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { if (v == null) window.localStorage.removeItem(k); else window.localStorage.setItem(k, v); } catch (e) {} }
@@ -436,17 +437,36 @@ function horarioDe(iso) { var d = dow(iso); return horarios().filter(function (h
 function enPlazo(p, fecha) { return p.inicio <= fecha && fecha <= p.vence; }
 function diasRestan(p) { return diasEntre(hoy(), p.vence); }
 function ganoEY(p) { return !!(p.ey && typeof p.ey === "object"); }
+/* Desde el Test del Nivel 0, con las 5 clases se habilita el test (15 días) y la botella se gana al
+   aprobarlo. Quien logró sus clases antes de que empezara el test (no_aplica) sigue con la regla de antes. */
+function estadoTest(p) { return p.test ? p.test.estado : null; }
 function estadoBotella(p) {
   if (p.botella_entregada_en) return "entregada";
-  if (p.estado === "logro") return ganoEY(p) ? "con_ey" : "por_entregar";
-  return "no";
+  if (p.estado !== "logro") return "no";
+  if (ganoEY(p)) return "con_ey";
+  var t = estadoTest(p);
+  if (!t || t === "aprobado" || t === "no_aplica") return "por_entregar";
+  if (t === "habilitado") return "falta_test";
+  if (t === "vencido") return "sin_test";
+  return "no";                                   // fuera del test
+}
+function textoTest(p) {
+  var t = p.test || {};
+  if (t.estado === "habilitado") {
+    var d = t.dias;
+    return "le falta su test: hasta el " + fCorta(t.hasta) + " (" + (d <= 0 ? "vence hoy" : d === 1 ? "queda 1 día" : "quedan " + d + " días") + ")" +
+      (t.intentos ? " · " + t.intentos + (t.intentos === 1 ? " intento" : " intentos") + (t.mejor != null ? ", mejor " + t.mejor : "") : "");
+  }
+  if (t.estado === "vencido") return "no aprobó su test a tiempo (venció el " + fCorta(t.hasta) + ")" + (t.mejor != null ? " · mejor " + t.mejor : "");
+  if (t.estado === "aprobado") return "aprobó su test con " + t.nota + " el " + fCorta(t.aprobado_en);
+  return "";
 }
 function descuento(p) {
   if (!p.botella_entregada_en || !ganoEY(p)) return null;
   return p.ey_descontado_en ? "hecho" : "pendiente";
 }
 function reglaTexto() {
-  return meta() + " capacitaciones en los primeros " + cfg().dias_plazo + " días = botella de acero, el adelanto del Empiece Ya.";
+  return meta() + " capacitaciones en los primeros " + cfg().dias_plazo + " días y aprobar el test = botella de acero, el adelanto del Empiece Ya.";
 }
 function etiquetaEY(ey) {
   if (!ey) return "";
@@ -508,8 +528,9 @@ function lineaEstado(p) {
   }
   if (p.estado === "logro") {
     var b = estadoBotella(p);
-    return { txt: "Logró el " + fCorta(p.logro_fecha) + " · " + (b === "entregada" ? "botella entregada" : b === "con_ey" ? "su botella va con el Empiece Ya" : "botella por entregar"),
-             cls: "ok" };
+    return { txt: "Logró el " + fCorta(p.logro_fecha) + " · " + (b === "entregada" ? "botella entregada" : b === "con_ey" ? "su botella va con el Empiece Ya"
+               : b === "falta_test" || b === "sin_test" ? textoTest(p) : b === "por_entregar" ? "botella por entregar" : "fuera del test"),
+             cls: b === "sin_test" ? "mal" : b === "falta_test" && (p.test.dias || 0) <= 3 ? "urge" : "ok" };
   }
   if (p.estado === "vencio") return { txt: "Venció el " + fCorta(p.vence) + " con " + p.validas + " de " + m, cls: "mal" };
   if (p.estado === "sin_seguimiento") return { txt: "Inscrito antes del seguimiento (" + fCorta(p.fecha_inscripcion) + ")", cls: "" };
@@ -539,7 +560,7 @@ function linkWA(p) {
 /* Bienvenida tiene a los nuevos de los últimos 45 días y a quien aún no recoge su botella */
 function enBienvenida(p) {
   if (p.excluido) return false;
-  return diasEntre(p.inicio, hoy()) <= 45 || (p.estado === "logro" && !p.botella_entregada_en && !ganoEY(p));
+  return diasEntre(p.inicio, hoy()) <= 45 || (p.estado === "logro" && !p.botella_entregada_en && !ganoEY(p) && estadoBotella(p) !== "sin_test");
 }
 function enlaceBienvenida(p, paso) {
   return BIENVENIDA + "/#a=" + encodeURIComponent(p.id) + (paso ? "&paso=" + paso : "");
@@ -576,7 +597,7 @@ function render() {
 function vistaLogin() {
   return '<main class="login wrap">' +
     '<div class="marca"><div class="cero"></div><div><div class="caps tiny">Empiece Ya · Equipo Arequipa</div><h1>Nivel Cero</h1></div></div>' +
-    '<p class="regla">5 capacitaciones en los primeros 30 días = botella de acero, el adelanto del Empiece Ya.</p>' +
+    '<p class="regla">5 capacitaciones en los primeros 30 días y aprobar el test = botella de acero, el adelanto del Empiece Ya.</p>' +
     '<form id="fLogin" class="card pad">' +
       '<label class="lbl" for="clave">Clave de administrador</label>' +
       '<input class="in" id="clave" type="password" autocomplete="current-password" placeholder="La misma del panel admin" required>' +
@@ -729,22 +750,30 @@ function filaInscrito(p) {
 
 /* ----- botellas */
 function vistaBotellas() {
-  var por = [], desc = [], conEY = [], entregadas = [];
+  var por = [], desc = [], conEY = [], entregadas = [], faltaTest = [], sinTest = [];
   S.d.inscritos.forEach(function (p) {
     var b = estadoBotella(p);
     if (b === "por_entregar") por.push(p);
+    else if (b === "falta_test") faltaTest.push(p);
+    else if (b === "sin_test") sinTest.push(p);
     else if (b === "con_ey") conEY.push(p);
     else if (b === "entregada") { entregadas.push(p); if (descuento(p) === "pendiente") desc.push(p); }
   });
   por.sort(function (a, b) { return String(a.logro_fecha).localeCompare(String(b.logro_fecha)); });
+  faltaTest.sort(function (a, b) { return String(a.test.hasta).localeCompare(String(b.test.hasta)); });
+  sinTest.sort(function (a, b) { return String(b.test.hasta).localeCompare(String(a.test.hasta)); });
   entregadas.sort(function (a, b) { return b.botella_entregada_en.localeCompare(a.botella_entregada_en); });
-  var html = '<p class="regla">La botella es el adelanto del Empiece Ya: si después gana el Empiece Ya, ese premio se le entrega sin botella.</p>';
+  var html = '<p class="regla">Con sus 5 clases se habilita su test: al aprobarlo gana la botella (va a Premios como por entregar). La botella es el adelanto del Empiece Ya: si después gana el Empiece Ya, ese premio se le entrega sin botella.</p>';
   html += seccion("Por entregar", por.length, por.length ? por.map(filaPorEntregar).join("") : '<p class="hint">No hay botellas pendientes.</p>');
+  if (faltaTest.length) html += seccion("Les falta el test", faltaTest.length,
+    '<p class="hint">Completaron sus 5 clases: la botella es suya si aprueban el test dentro de su plazo.</p>' + faltaTest.map(filaFaltaTest).join(""));
   if (desc.length) html += seccion("Descontar en su Empiece Ya", desc.length,
     '<p class="hint">Ya recibieron su botella y ganaron el Empiece Ya: su premio va sin botella.</p>' + desc.map(filaDescontar).join(""));
   if (conEY.length) html += seccion("Su botella viene con el Empiece Ya", conEY.length,
     '<p class="hint">Ganaron el Empiece Ya antes de recibir su botella: no se entrega aparte.</p>' + conEY.map(filaConEY).join(""));
   html += seccion("Entregadas", entregadas.length, entregadas.length ? entregadas.map(filaEntregada).join("") : '<p class="hint">Todavía no se entregó ninguna.</p>');
+  if (sinTest.length) html += seccion("No aprobaron el test a tiempo", sinTest.length,
+    '<p class="hint">Sin botella. Para darle más días a alguien, ábrelo en el Test del Nivel 0.</p>' + sinTest.map(filaSinTest).join(""));
   return html;
 }
 function seccion(t, n, cuerpo) {
@@ -756,9 +785,18 @@ function cuerpoPersona(p, sub, extra) {
 }
 function filaPorEntregar(p) {
   var av = (p.mensajes || []).filter(function (m) { return m.paso === "recoger"; }).pop();
-  return '<div class="fila bot">' + cuerpoPersona(p, "Logró el " + fCorta(p.logro_fecha) + (av ? " · le avisaste el " + fCorta(av.en) : "")) +
+  var t = p.test && p.test.estado === "aprobado" ? " · test " + p.test.nota : "";
+  return '<div class="fila bot">' + cuerpoPersona(p, "Logró el " + fCorta(p.logro_fecha) + t + (av ? " · le avisaste el " + fCorta(av.en) : "")) +
     '<span class="der">' + linkBienvenida(p, "recoger", "Avisar ↗", ' aria-label="Avisar a ' + esc(pila(p.nombre)) + ' que la recoja, desde Bienvenida"') +
     '<button class="btn ok sm" data-a="entregar" data-id="' + p.id + '">Entregué</button></span></div>';
+}
+function filaFaltaTest(p) {
+  var av = (p.mensajes || []).filter(function (m) { return m.paso === "botella" || m.paso === "test_recordar"; }).pop();
+  return '<div class="fila bot">' + cuerpoPersona(p, "Logró el " + fCorta(p.logro_fecha) + " · " + textoTest(p) + (av ? " · le escribiste el " + fCorta(av.en) : "")) +
+    '<span class="der">' + linkBienvenida(p, "test_recordar", "Recordar ↗", ' aria-label="Recordarle a ' + esc(pila(p.nombre)) + ' su test, desde Bienvenida"') + "</span></div>";
+}
+function filaSinTest(p) {
+  return '<div class="fila bot">' + cuerpoPersona(p, "Logró el " + fCorta(p.logro_fecha) + " · " + textoTest(p)) + "</div>";
 }
 function filaDescontar(p) {
   return '<div class="fila bot">' + cuerpoPersona(p, "Empiece Ya " + etiquetaEY(p.ey) + " · botella entregada el " + fCorta(p.botella_entregada_en),
@@ -1143,8 +1181,15 @@ function bloqueBotella(p, ed) {
     if (d === "hecho") h += '<div class="hint">Descontada en su Empiece Ya el ' + esc(fCorta(p.ey_descontado_en)) + ' <button class="lk" data-a="deshacerDescuento">Deshacer</button></div>';
   } else if (b === "con_ey") {
     h += "Viene con su premio del Empiece Ya: no se entrega aparte.";
+  } else if (b === "falta_test") {
+    h += "Todavía no: " + esc(textoTest(p)) + ".";
+    h += '<div class="fila-btn">' + linkBienvenida(p, "test_recordar", "Recordarle su test ↗") +
+      '<a class="lk" href="' + esc(TEST + "#oficina") + '" target="_blank" rel="noopener">Ver en el test</a></div>';
+  } else if (b === "sin_test") {
+    h += "Sin botella: " + esc(textoTest(p)) + ".";
+    h += '<div class="fila-btn"><a class="lk" href="' + esc(TEST + "#oficina") + '" target="_blank" rel="noopener">Darle más días en el test</a></div>';
   } else if (b === "por_entregar") {
-    h += "Por entregar · logró el " + esc(fCorta(p.logro_fecha));
+    h += "Por entregar · logró el " + esc(fCorta(p.logro_fecha)) + (p.test && p.test.estado === "aprobado" ? " · " + esc(textoTest(p)) : "");
     if (ed === "botella")
       h += '<div class="edit"><input class="in" type="date" id="eBotella" value="' + hoy() + '" max="' + hoy() + '"><div class="fila-btn">' +
         '<button class="btn ok sm" data-a="guardarBotella">Guardar</button><button class="lk" data-a="editar" data-e="">Cancelar</button></div></div>';
@@ -1247,7 +1292,7 @@ function marcar(id) {
     var k = claseDe(r.clase_id); if (k) k.n = r.n;
     parchar(r.inscrito);
     var p = r.inscrito;
-    if (nuevo && p && antes < meta() && p.validas >= meta()) aviso("¡" + pila(p.nombre) + " completó sus " + meta() + " clases! Ganó su botella.", "ok");
+    if (nuevo && p && antes < meta() && p.validas >= meta()) aviso("¡" + pila(p.nombre) + " completó sus " + meta() + " clases! Ya puede rendir su test.", "ok");
   }).catch(function (e) {
     if (nuevo) delete pres[id]; else pres[id] = true;
     c.n += nuevo ? -1 : 1;
@@ -1484,7 +1529,7 @@ function agregarAsistencia(claseId, recargarTodo) {
     render();
     var p = r.inscrito, c = claseDe(claseId);
     var a = p && (p.asistencias || []).filter(function (x) { return x.c === claseId; })[0];
-    aviso(p && antes < meta() && p.validas >= meta() ? "¡" + pila(p.nombre) + " completó sus " + meta() + " clases! Ganó su botella."
+    aviso(p && antes < meta() && p.validas >= meta() ? "¡" + pila(p.nombre) + " completó sus " + meta() + " clases! Ya puede rendir su test."
       : a && !a.v ? "Clase agregada, pero fue fuera de su plazo: no suma"
       : "Clase agregada" + (c ? ": " + fDia(c.fecha) : ""), a && !a.v ? "mal" : "ok");
     if (recargarTodo) cargar(true);

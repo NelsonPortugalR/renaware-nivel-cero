@@ -65,7 +65,7 @@ function estadoInicial() {
   const cargados = { "2025-11-26": { anio: 2025, pb: 24, estado: "Historico" } };
   for (let i = 9; i <= 19; i++) cargados[addDays(pIni(i), 13)] = { anio: 2026, pb: i + 1, estado: "Oficial" };
   for (let i = -2; i <= 8; i++) { const c = addDays(pIni(i), 13); cargados[c] = { anio: +c.slice(0, 4), pb: ((i % 26) + 26) % 26 + 1, estado: "Historico" }; }
-  return { cfg, ins, estado, clases, asis, ganadores, cargados, mensajes: [], token: "tok-valido", llamadas: [] };
+  return { cfg, ins, estado, clases, asis, ganadores, cargados, mensajes: [], token: "tok-valido", llamadas: [], test: {} };
 }
 
 function servidor(st) {
@@ -106,6 +106,7 @@ function servidor(st) {
       logro_fecha: val.length >= meta ? val[meta - 1].fecha : null,
       estado, ey: eyr, pb_ingreso: pbObj(st, i0), ey_fin: fin, ey_estado: eyEstado,
       trato: e.trato || null,
+      test: (st.test || {})[p.id] || null,   // estado del Test del Nivel 0 (null = como antes del test)
       mensajes: st.mensajes.filter(m => m.ins === p.id && !m.anulado).map(m => ({ id: m.id, paso: m.paso, modo: m.modo, en: m.en }))
     };
   }
@@ -292,7 +293,7 @@ function bien(nombre, cond, extra) {
   await page.locator('.fila.asis[data-id="a"]').click();
   await espera(400);
   bien("marca y cuenta", (await page.locator(".contador b").innerText()) === "1");
-  bien("avisa que ganó su botella", /Ana completó sus 5 clases/.test(await toast()), await toast());
+  bien("avisa que completó sus clases y ya puede rendir su test", /Ana completó sus 5 clases! Ya puede rendir su test/.test(await toast()), await toast());
   bien("la fila queda marcada", (await page.locator('.fila.asis[data-id="a"]').getAttribute("aria-pressed")) === "true");
   bien("la lista no salta", Math.abs((await page.evaluate(() => window.scrollY)) - scrollAntes) < 5);
   bien("pestaña Botellas se actualiza", /Botellas\s*3/i.test(await page.locator("nav.tabs").innerText()), await page.locator("nav.tabs").innerText());
@@ -470,6 +471,32 @@ function bien(nombre, cond, extra) {
   const bot2 = await page.locator("main").innerText();
   bien("registra el descuento", !/Descontar en su Empiece Ya/i.test(bot2) && /descontada en su Empiece Ya/.test(bot2));
   await page.screenshot({ path: "/tmp/n0-3-botellas.png", fullPage: true });
+
+  /* 7b · el Test del Nivel 0 decide la botella */
+  async function botellas() {
+    await page.click('button[data-a="recargar"]'); await espera(500);
+    await page.click('button.tab[data-tab="botellas"]'); await espera(200);
+    return page.locator("main").innerText();
+  }
+  st.test = { f: { estado: "habilitado", desde: "2026-10-06", hasta: "2026-10-24", dias: 3, intentos: 1, mejor: 80 } };
+  let b3 = await botellas();
+  bien("sin aprobar el test no está por entregar", /Por entregar\s*0/i.test(b3) && /Les falta el test\s*1/i.test(b3) &&
+    /le falta su test: hasta el 24 oct \(quedan 3 días\) · 1 intento, mejor 80/.test(b3), b3.slice(0, 700));
+  bien("«Recordar» lleva a Bienvenida con el recordatorio del test",
+    (await page.locator('.fila.bot a[href="https://renaware-bienvenida.pages.dev/#a=f&paso=test_recordar"]').count()) === 1);
+  await page.locator('.fila.bot .cuerpo[data-id="f"]').click(); await espera(200);
+  const fichaT = await page.locator(".modal").innerText();
+  bien("la ficha dice que le falta el test y enlaza al test", /Todavía no: le falta su test/.test(fichaT) &&
+    (await page.locator('.modal a[href="https://renaware-plataforma.nelson1614.workers.dev/test/#oficina"]').count()) === 1, fichaT.slice(0, 500));
+  await page.click('.x[aria-label="Cerrar"]'); await espera(150);
+  st.test.f = { estado: "vencido", desde: "2026-10-06", hasta: "2026-10-20", mejor: 85, intentos: 2 };
+  b3 = await botellas();
+  bien("si no aprobó a tiempo, no hay botella", /No aprobaron el test a tiempo\s*1/i.test(b3) && /no aprobó su test a tiempo \(venció el 20 oct\) · mejor 85/.test(b3) &&
+    !/Les falta el test/.test(b3) && /Por entregar\s*0/i.test(b3), b3.slice(0, 700));
+  st.test.f = { estado: "aprobado", nota: 94, aprobado_en: "2026-10-21", intentos: 3, mejor: 94 };
+  b3 = await botellas();
+  bien("al aprobar el test, su botella está por entregar", /Por entregar\s*1/i.test(b3) && /Logró el 6 oct · test 94/.test(b3), b3.slice(0, 500));
+  st.test = {};
 
   /* 8 · números */
   await page.click('button.tab[data-tab="numeros"]');

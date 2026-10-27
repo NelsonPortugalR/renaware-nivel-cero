@@ -1,8 +1,19 @@
 # Nivel Cero · Equipo Arequipa
 
 Arranque antes del Empiece Ya: quien asiste a **5 capacitaciones en sus
-primeros 30 días** gana la **botella de acero**, que es el adelanto del
+primeros 30 días** y luego **aprueba el Test del Nivel 0** (tiene 15 días desde
+su 5.ª clase, con 90 o más) gana la **botella de acero**, que es el adelanto del
 Empiece Ya. Si después gana el Empiece Ya, ese premio se entrega sin botella.
+
+El test vive en la plataforma
+([/test/](https://renaware-plataforma.nelson1614.workers.dev/test/); la vista de
+oficina en `/test/#oficina`). Su estado llega en cada inscrito como `test`
+(desde `n0_inscritos_json`): *habilitado* (le falta el test), *aprobado* (la
+botella pasa a Premios como por entregar), *vencido* (no aprobó a tiempo: sin
+botella) o *no_aplica* (logró sus clases antes de que empezara el test: regla de
+antes). En **Botellas** salen «Les falta el test» (con *Recordar*, que abre el
+mensaje en Bienvenida) y «No aprobaron el test a tiempo». Marcar la botella
+entregada aquí o en Premios se ve en los dos lados.
 
 ## Qué hace
 
