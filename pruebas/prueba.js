@@ -482,6 +482,7 @@ function bien(nombre, cond, extra) {
   let b3 = await botellas();
   bien("sin aprobar el test no está por entregar", /Por entregar\s*0/i.test(b3) && /Les falta el test\s*1/i.test(b3) &&
     /le falta su test: hasta el 24 oct \(quedan 3 días\) · 1 intento, mejor 80/.test(b3), b3.slice(0, 700));
+  await page.screenshot({ path: "/tmp/n0-3b-test.png", fullPage: true });
   bien("«Recordar» lleva a Bienvenida con el recordatorio del test",
     (await page.locator('.fila.bot a[href="https://renaware-bienvenida.pages.dev/#a=f&paso=test_recordar"]').count()) === 1);
   await page.locator('.fila.bot .cuerpo[data-id="f"]').click(); await espera(200);
