@@ -17,9 +17,11 @@ entregada aquí o en Premios se ve en los dos lados.
 
 ## Qué hace
 
-- **Asistencia**: propone la clase de hoy según el horario (martes 9:30,
-  miércoles 4:00 p. m., viernes 4:30 p. m.) y se marca con un toque a quien
-  llegó. Solo aparecen quienes tienen el plazo abierto en la fecha de la clase;
+- **Asistencia**: las clases de la semana llegan solas desde el **horario de
+  Entrenamientos** (plataforma, `/entrenamientos/#horario`): cada evento con
+  asistencia es una clase aquí (`n0_clases.evento_id`), y el horario habitual
+  (`n0_config.horarios`) también sale de ahí. Si falta alguna, propone la clase
+  de hoy según ese horario y se crea con un toque. Se marca a quien llegó. Solo aparecen quienes tienen el plazo abierto en la fecha de la clase;
   los demás se pueden mostrar, pero no suman. Clases pasadas se crean con su
   fecha para cargar asistencias en papel.
 - **Inscritos**: en curso, lograron, vencieron. Cada uno con sus clases, plazo,

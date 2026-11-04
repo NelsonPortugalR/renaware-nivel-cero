@@ -636,7 +636,8 @@ function vistaTab() {
 function vistaClases() {
   var h = hoy();
   var deHoy = S.d.clases.filter(function (c) { return c.fecha === h; });
-  var otras = S.d.clases.filter(function (c) { return c.fecha !== h; });
+  var otras = S.d.clases.filter(function (c) { return c.fecha < h; });
+  var proximas = S.d.clases.filter(function (c) { return c.fecha > h; }).sort(function (a, b) { return (a.fecha + a.hora).localeCompare(b.fecha + b.hora); });
   var sugeridas = horarioDe(h).filter(function (x) { return !deHoy.some(function (c) { return c.hora === x.hora; }); });
   var html = '<p class="regla">' + esc(reglaTexto()) + "</p>";
   html += '<section class="card pad"><span class="lbl">Hoy · ' + esc(fLarga(h)) + "</span>";
@@ -647,6 +648,11 @@ function vistaClases() {
   if (!deHoy.length && !sugeridas.length) html += '<p class="hint">Hoy no hay capacitación en el horario habitual.</p>';
   html += '<button class="btn sec full" data-a="nuevaClase">' + (deHoy.length || sugeridas.length ? "Otra hora u otro día" : "Nueva clase") + "</button>";
   html += "</section>";
+  if (proximas.length) {
+    /* Las clases que vienen salen del horario de la semana (módulo Entrenamientos de la plataforma) */
+    html += '<h2 class="sec-t">Próximas clases</h2><div class="lista">' + proximas.slice(0, 8).map(function (c) { return filaClase(c, false); }).join("") + "</div>";
+    html += '<p class="hint">Vienen del horario de la semana (Entrenamientos). Para apagar una, hazlo ahí; para una clase extra, usa «Otra hora u otro día».</p>';
+  }
   html += '<h2 class="sec-t">Clases anteriores</h2>';
   if (!otras.length) {
     html += '<p class="hint">Aún no hay clases anteriores. Si tienes asistencias en papel de las últimas semanas, crea esas clases con su fecha y márcalas: así suman dentro de los ' + cfg().dias_plazo + " días de cada persona.</p>";
