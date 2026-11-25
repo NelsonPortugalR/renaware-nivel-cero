@@ -480,7 +480,7 @@ function etPB(x) {
 var ROMANO = ["", "I", "II", "III"];
 function textoNiveles(w, conPB) {
   var t = (w && w.niveles || []).map(function (x) {
-    return (x.n === 4 ? "Miami" : ROMANO[x.n]) + (conPB && x.pb ? " (" + etPB(x) + ")" : "");
+    return (x.n === 4 ? "Viaje" : ROMANO[x.n]) + (conPB && x.pb ? " (" + etPB(x) + ")" : "");
   }).join(" · ");
   return t && (w.niveles[0].n === 4 ? t : "Nivel " + t);
 }
@@ -488,7 +488,7 @@ function nivelesBadges(w) {
   var l = (w && w.niveles || []).map(function (x) { return x.n; });
   if (!l.length) return "";
   return '<span class="der nvs">' + l.map(function (n) {
-    return '<span class="nv nv' + n + '" title="' + (n === 4 ? "Viaje a Miami" : "Nivel " + ROMANO[n]) + '">' + (n === 4 ? "MIA" : ROMANO[n]) + "</span>";
+    return '<span class="nv nv' + n + '" title="' + (n === 4 ? "Premio viaje" : "Nivel " + ROMANO[n]) + '">' + (n === 4 ? "VIAJE" : ROMANO[n]) + "</span>";
   }).join("") + "</span>";
 }
 function eyDe(codigo) { return codigo ? IDX.eyCod[codigo] : null; }
@@ -946,13 +946,13 @@ function vistaEY() {
     return '<button class="chip' + (S.eyAnio === y ? " on" : "") + '" data-a="eyAnio" data-y="' + y + '">' + y + "<span>" + anios[y] + "</span></button>";
   }).join("") + '<button class="chip' + (S.eyAnio === "todos" ? " on" : "") + '" data-a="eyAnio" data-y="todos">Todos<span>' + lista.length + "</span></button></div>";
   html += '<div class="niveles">' + tileNivel(0, "Ganadores", sel.length) + tileNivel(1, "Nivel I", cn[1]) + tileNivel(2, "Nivel II", cn[2]) +
-    tileNivel(3, "Nivel III", cn[3]) + tileNivel(4, "Miami", cn[4]) + "</div>";
+    tileNivel(3, "Nivel III", cn[3]) + tileNivel(4, "Viaje", cn[4]) + "</div>";
   if (sinDetalle) html += '<p class="hint">' + plural(sinDetalle, "ganador no tiene", "ganadores no tienen") + " el detalle del premio" +
     (detalleDesde() ? " (existe desde el " + esc(detalleDesde()) + ")" : "") + ", así que su nivel no se conoce.</p>";
   var c = { con: 0, sin: 0, fuera: 0 };
   vis.forEach(function (w) { c[cruceN0(w).grupo]++; });
   if (S.eyCruce) vis = vis.filter(function (w) { return cruceN0(w).grupo === S.eyCruce; });
-  html += '<section class="card pad"><span class="lbl">Contra el Nivel Cero' + (S.eyNivel ? " · " + (S.eyNivel === 4 ? "Miami" : "Nivel " + ROMANO[S.eyNivel]) : "") + "</span>" +
+  html += '<section class="card pad"><span class="lbl">Contra el Nivel Cero' + (S.eyNivel ? " · " + (S.eyNivel === 4 ? "Viaje" : "Nivel " + ROMANO[S.eyNivel]) : "") + "</span>" +
     '<div class="cruce">' + celdaCruce("con", "ok", c.con, "hicieron el Nivel Cero") + celdaCruce("sin", "mal", c.sin, "ganaron sin completar las " + meta() + " clases") +
     celdaCruce("fuera", "", c.fuera, "de antes o fuera del registro") + '</div><p class="hint" style="margin:10px 0 0">Toca un número para ver solo esos.</p></section>';
   var grupos = {}, orden = [];

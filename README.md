@@ -40,7 +40,7 @@ clases. La ficha tiene *Abrir en Bienvenida* (`#a=<id>`) y en Botellas,
 la fila dice si ya se le avisó). Se abre ya con sesión: `traspaso_crear_admin`
 da un código de un solo uso (3 minutos) que Bienvenida canjea en la función
 edge `traspaso`; si falla, va el enlace simple.
-- **Empiece Ya**: ganadores de WV08 por año y por nivel (I, II, III, Miami),
+- **Empiece Ya**: ganadores de WV08 por año y por nivel (I, II, III y viaje),
   agrupados por período, cruzados con el Nivel Cero: quién lo hizo (y su
   botella), quién ganó sin completar las 5 clases y quién es de antes o no
   está en el registro. Abajo, tus inscritos: ganaron, en plazo, esperando
@@ -69,7 +69,8 @@ edge `traspaso`; si falla, va el enlace simple.
 - Niveles leídos de los premios (`eya_premios.items`): I = utensilio 1.5L +
   botella, II = Multi Cooker (antes cocina de inducción), III = Nutrex Press u
   Olla a Presión 8L desde el programa del 3 de setiembre (antes Juego Chef I),
-  Miami = viaje; en el programa de inicios de 2026 el III también fue el Filtro de
+  viaje = todo ítem de categoría `viaje` en `eya_items` (Miami; desde el PB23 de
+  2026, Guanacaste); en el programa de inicios de 2026 el III también fue el Filtro de
   Agua RWF-228. El detalle de premios existe desde el PB01 de 2026; antes solo
   está el histórico de ganadores.
 - En la pestaña Empiece Ya, «actualizados al …» abre el estado de la carga

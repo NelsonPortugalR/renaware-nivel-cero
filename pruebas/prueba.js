@@ -531,14 +531,14 @@ function bien(nombre, cond, extra) {
   const anios = await page.locator("main .chips").first().innerText();
   bien("años con su cuenta", /2026\s*4/.test(anios) && /2025\s*1/.test(anios) && /Todos\s*5/i.test(anios), anios.replace(/\n/g, " "));
   const tiles = await page.locator(".niveles").innerText();
-  bien("ganadores por nivel", /4\s*Ganadores/i.test(tiles) && /4\s*Nivel I\b/i.test(tiles) && /2\s*Nivel II\b/i.test(tiles) && /1\s*Nivel III/i.test(tiles) && /1\s*Miami/i.test(tiles), tiles.replace(/\n/g, " "));
+  bien("ganadores por nivel", /4\s*Ganadores/i.test(tiles) && /4\s*Nivel I\b/i.test(tiles) && /2\s*Nivel II\b/i.test(tiles) && /1\s*Nivel III/i.test(tiles) && /1\s*Viaje/i.test(tiles), tiles.replace(/\n/g, " "));
   let cruce = await page.locator(".cruce").first().innerText();
   bien("cruce con el Nivel Cero", /2\s*hicieron el Nivel Cero/.test(cruce) && /0\s*ganaron sin completar las 5 clases/.test(cruce) && /2\s*de antes o fuera del registro/.test(cruce), cruce.replace(/\n/g, " "));
   const filasEY = await page.locator(".fila.gan").allInnerTexts();
   bien("lista los ganadores del año", filasEY.length === 4, filasEY.length);
   const fElena = filasEY.find(t => /Elena/.test(t)) || "", fGloria = filasEY.find(t => /Gloria/.test(t)) || "", fJuan = filasEY.find(t => /Juan Carlos/.test(t)) || "";
   bien("marca a quien hizo el Nivel Cero y su botella", /Nivel Cero/i.test(fElena) && /Hizo el Nivel Cero · botella entregada/.test(fElena) && /su botella va con el Empiece Ya/.test(fGloria), fElena + " / " + fGloria);
-  bien("niveles con el período en que llegó", /Nivel I \(PB12\) · II \(PB14\) · III \(PB16\) · Miami \(PB18\)/.test(fJuan) && /No está en el registro de afiliaciones/.test(fJuan), fJuan);
+  bien("niveles con el período en que llegó", /Nivel I \(PB12\) · II \(PB14\) · III \(PB16\) · Viaje \(PB18\)/.test(fJuan) && /No está en el registro de afiliaciones/.test(fJuan), fJuan);
   bien("agrupa por período", /PB20 · 30 set/i.test(eyt) && /PB12 · 10 jun/i.test(eyt));
   await page.screenshot({ path: "/tmp/n0-8-empiece-ya.png", fullPage: true });
   await page.click('.tnv[data-n="2"]');
